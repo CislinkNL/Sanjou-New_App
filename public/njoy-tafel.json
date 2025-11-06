@@ -1,0 +1,1150 @@
+{
+  "Tafel-1": {
+    "menuType": "lunch",
+    "Persons": 3,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 1,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=1&pincode=123&pincode=",
+    "orders": {
+      "history": [
+        null,
+        {
+          "date": "2025-08-06T21:57:09.677Z",
+          "invoiceNumber": 1,
+          "orderDetails": [
+            [
+              "2025-08-06T21:57:09.677Z",
+              "12",
+              1,
+              0,
+              0.09,
+              "Salmonmango Nigiri"
+            ],
+            [
+              "2025-08-06T21:57:09.677Z",
+              "11",
+              1,
+              0,
+              0.09,
+              "Tako Nigiri"
+            ],
+            [
+              "2025-08-06T21:57:09.677Z",
+              "13",
+              1,
+              0,
+              0.09,
+              "Avocado Nigiri"
+            ],
+            [
+              "2025-08-06T21:57:09.677Z",
+              "14",
+              1,
+              0,
+              0.09,
+              "Gyu Nigiri"
+            ],
+            [
+              "2025-08-06T21:57:09.677Z",
+              "15",
+              1,
+              0,
+              0.09,
+              "Salmon Cheese Nigiri"
+            ],
+            [
+              "2025-08-06T21:57:09.677Z",
+              "16",
+              1,
+              0,
+              0.09,
+              "Flamed Suzuki"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 0
+            }
+          ],
+          "timestamp": 1754517430199,
+          "totalItems": 6
+        },
+        {
+          "date": "2025-08-06T21:58:23.311Z",
+          "invoiceNumber": 2,
+          "orderDetails": [
+            [
+              "2025-08-06T21:58:23.311Z",
+              "7",
+              1,
+              0,
+              0.09,
+              "Kani Nigiri"
+            ],
+            [
+              "2025-08-06T21:58:23.311Z",
+              "6",
+              1,
+              0,
+              0.09,
+              "Tamago Nigiri"
+            ],
+            [
+              "2025-08-06T21:58:23.311Z",
+              "5",
+              1,
+              0,
+              0.09,
+              "Saba Nigiri"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 0
+            }
+          ],
+          "timestamp": 1754517504018,
+          "totalItems": 3
+        },
+        {
+          "date": "2025-08-06T21:59:27.741Z",
+          "invoiceNumber": 3,
+          "orderDetails": [
+            [
+              "2025-08-06T21:59:27.741Z",
+              "47",
+              1,
+              0,
+              0.09,
+              "Njoy"
+            ],
+            [
+              "2025-08-06T21:59:27.741Z",
+              "49",
+              1,
+              0,
+              0.09,
+              "Spicy Crispy"
+            ],
+            [
+              "2025-08-06T21:59:27.741Z",
+              "50",
+              1,
+              0,
+              0.09,
+              "Sake Temaki"
+            ],
+            [
+              "2025-08-06T21:59:27.741Z",
+              "51",
+              1,
+              0,
+              0.09,
+              "California Temaki"
+            ],
+            [
+              "2025-08-06T21:59:27.741Z",
+              "52",
+              1,
+              0,
+              0.09,
+              "Yasai Temaki"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 0
+            }
+          ],
+          "timestamp": 1754517568282,
+          "totalItems": 5
+        }
+      ],
+      "orderNumbers": 4,
+      "orderlist": [
+        {
+          "allergy": "",
+          "description": "Tequila",
+          "group": "geen",
+          "id": 0,
+          "price": 3.5,
+          "quantity": 1,
+          "sku": "306",
+          "subtotal": 3.5,
+          "taxAmount": 0.00735,
+          "taxRate": 0.21
+        }
+      ]
+    },
+    "timer": {
+      "duration": 1,
+      "endTime": 1754517628565,
+      "startTime": 1754517568565
+    }
+  },
+  "Tafel-10": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 9,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=10&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-11": {
+    "menuType": "lunch",
+    "Persons": 4,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 10,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=11&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-12": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 11,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=12&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-2": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 2,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=2&pincode=123&pincode=",
+    "orders": {
+      "history": [
+        null,
+        {
+          "date": "2025-08-14T14:08:21.253Z",
+          "invoiceNumber": 1,
+          "orderDetails": [
+            [
+              "2025-08-14T14:08:21.253Z",
+              "115",
+              3,
+              0,
+              9,
+              "Wantan Soup"
+            ],
+            [
+              "2025-08-14T14:08:21.253Z",
+              "122",
+              3,
+              0,
+              9,
+              "Cheese Maki"
+            ],
+            [
+              "2025-08-14T14:08:21.253Z",
+              "197",
+              20,
+              2.5,
+              9,
+              "Pepsi cola"
+            ],
+            [
+              "2025-08-14T14:08:21.253Z",
+              "213",
+              1,
+              3.7,
+              9,
+              "Limonade"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 53.7
+            }
+          ],
+          "timestamp": 1755180502069,
+          "totalItems": 4
+        }
+      ],
+      "orderNumbers": 1
+    },
+    "timer": {
+      "duration": 5,
+      "endTime": 1755180802145,
+      "startTime": 1755180502145
+    }
+  },
+  "Tafel-21": {
+    "menuType": "lunch",
+    "Persons": 4,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 12,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=21&pincode=123&pincode=",
+    "orders": {
+      "orderlist": {
+        "163": {
+          "allergy": "",
+          "basePrice": 0,
+          "description": "Spekkoek",
+          "group": "groep3",
+          "price": 0,
+          "quantity": 1,
+          "sku": "163",
+          "subtotal": 0,
+          "taxAmount": 0,
+          "taxRate": 9,
+          "updatedAt": 1755197886028
+        }
+      }
+    },
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-22": {
+    "menuType": "lunch",
+    "Persons": 4,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 13,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=22&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-23": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 14,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=23&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-25": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 15,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=25&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-26": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 16,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=26&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-27": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 17,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=27&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-28": {
+    "menuType": "lunch",
+    "Persons": 3,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 18,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=28&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-29": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 19,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=29&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-3": {
+    "Persons": 3,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 3,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=3&pincode=123&pincode=",
+    "orders": {
+      "history": [
+        null,
+        {
+          "date": "2025-08-15T03:08:14.145Z",
+          "invoiceNumber": 1,
+          "orderDetails": [
+            [
+              "2025-08-15T03:08:14.145Z",
+              "4",
+              1,
+              0,
+              9,
+              "Suzuki Nigiri"
+            ],
+            [
+              "2025-08-15T03:08:14.145Z",
+              "5",
+              1,
+              0,
+              9,
+              "Saba Nigiri"
+            ],
+            [
+              "2025-08-15T03:08:14.145Z",
+              "17",
+              1,
+              0,
+              9,
+              "Flamed Maguro"
+            ],
+            [
+              "2025-08-15T03:08:14.145Z",
+              "20",
+              1,
+              0,
+              9,
+              "Ebiko Gunkan"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 0
+            }
+          ],
+          "timestamp": 1755227294858,
+          "totalItems": 4
+        },
+        {
+          "date": "2025-08-15T03:08:27.544Z",
+          "invoiceNumber": 2,
+          "orderDetails": [
+            [
+              "2025-08-15T03:08:27.544Z",
+              "3",
+              1,
+              0,
+              9,
+              "Ebi Nigiri"
+            ],
+            [
+              "2025-08-15T03:08:27.544Z",
+              "4",
+              1,
+              0,
+              9,
+              "Suzuki Nigiri"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 0
+            }
+          ],
+          "timestamp": 1755227308164,
+          "totalItems": 2
+        },
+        {
+          "date": "2025-08-15T03:08:46.668Z",
+          "invoiceNumber": 3,
+          "orderDetails": [
+            [
+              "2025-08-15T03:08:46.668Z",
+              "37",
+              1,
+              0,
+              9,
+              "Sakecheese Maki"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 0
+            }
+          ],
+          "timestamp": 1755227327239,
+          "totalItems": 1
+        }
+      ],
+      "orderNumbers": 4
+    },
+    "timer": {
+      "duration": 5,
+      "endTime": 1755227627311,
+      "startTime": 1755227327311
+    }
+  },
+  "Tafel-30": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 20,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=30&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-31": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 21,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=31&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-32": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 22,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=32&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-41": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 23,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=41&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-42": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 24,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-43": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 25,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-45": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 26,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-46": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 27,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-47": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 28,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-48": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 29,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-49": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 30,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-5": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 4,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=5&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-50": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 31,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-51": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 32,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-52": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 33,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-53": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 34,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "orders": {
+      "orderNumbers": 1
+    },
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-6": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 5,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=6&pincode=123&pincode=",
+    "orders": {
+      "orderNumbers": 1
+    },
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-61": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 35,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-62": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 36,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-63": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 37,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-7": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 6,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=7&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-8": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 7,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=8&pincode=123&pincode=",
+    "orders": {
+      "orderlist": [
+        {
+          "allergy": "",
+          "description": "Saba Nigiri",
+          "group": "groep1",
+          "id": 0,
+          "price": 0,
+          "quantity": 1,
+          "sku": "5",
+          "subtotal": 0,
+          "taxAmount": 0,
+          "taxRate": 0.09
+        }
+      ]
+    },
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-9": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 8,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=9&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-T1": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 38,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-T10": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 47,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-T11": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 48,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-T2": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 39,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-T3": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 40,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-T4": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 41,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-T5": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 42,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "orders": {
+      "history": [
+        null,
+        {
+          "date": "2025-08-06T21:51:49.673Z",
+          "invoiceNumber": 1,
+          "orderDetails": [
+            [
+              "2025-08-06T21:51:49.673Z",
+              "23",
+              1,
+              0,
+              0.09,
+              "Chukawakame Gunkan"
+            ],
+            [
+              "2025-08-06T21:51:49.673Z",
+              "24",
+              1,
+              0,
+              0.09,
+              "Sake Gunkan"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 0
+            }
+          ],
+          "timestamp": 1754517112173,
+          "totalItems": 2
+        }
+      ],
+      "orderNumbers": 1
+    },
+    "timer": {
+      "duration": 10,
+      "endTime": 1754517712434,
+      "startTime": 1754517112434
+    }
+  },
+  "Tafel-T6": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 43,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-T7": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 44,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  },
+  "Tafel-T8": {
+    "menuType": "lunch",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 45,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "orders": {
+      "history": [
+        null,
+        {
+          "date": "2025-08-08T11:22:43.417Z",
+          "invoiceNumber": 1,
+          "orderDetails": [
+            [
+              "2025-08-08T11:22:43.417Z",
+              "11",
+              1,
+              0,
+              9,
+              "Tako Nigiri"
+            ],
+            [
+              "2025-08-08T11:22:43.417Z",
+              "12",
+              1,
+              0,
+              9,
+              "Salmonmango Nigiri"
+            ],
+            [
+              "2025-08-08T11:22:43.417Z",
+              "13",
+              1,
+              0,
+              9,
+              "Avocado Nigiri"
+            ],
+            [
+              "2025-08-08T11:22:43.417Z",
+              "14",
+              1,
+              0,
+              9,
+              "Gyu Nigiri"
+            ],
+            [
+              "2025-08-08T11:22:43.417Z",
+              "15",
+              1,
+              0,
+              9,
+              "Salmon Cheese Nigiri"
+            ],
+            [
+              "2025-08-08T11:22:43.417Z",
+              "16",
+              1,
+              0,
+              9,
+              "Flamed Suzuki"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 0
+            }
+          ],
+          "timestamp": 1754652163787,
+          "totalItems": 6
+        },
+        {
+          "date": "2025-08-08T11:45:21.917Z",
+          "invoiceNumber": 2,
+          "orderDetails": [
+            [
+              "2025-08-08T11:45:21.917Z",
+              "3",
+              2,
+              0,
+              9,
+              "Ebi Nigiri"
+            ],
+            [
+              "2025-08-08T11:45:21.917Z",
+              "9",
+              2,
+              0,
+              9,
+              "Hokkigai Nigiri"
+            ],
+            [
+              "2025-08-08T11:45:21.917Z",
+              "10",
+              1,
+              0,
+              9,
+              "Inari Nigiri"
+            ],
+            [
+              "2025-08-08T11:45:21.917Z",
+              "11",
+              1,
+              0,
+              9,
+              "Tako Nigiri"
+            ],
+            [
+              "2025-08-08T11:45:21.917Z",
+              "13",
+              2,
+              0,
+              9,
+              "Avocado Nigiri"
+            ],
+            [
+              "2025-08-08T11:45:21.917Z",
+              "16",
+              2,
+              0,
+              9,
+              "Flamed Suzuki"
+            ]
+          ],
+          "paymentDetails": [
+            {
+              "2": 0
+            }
+          ],
+          "timestamp": 1754653522363,
+          "totalItems": 6
+        }
+      ],
+      "orderNumbers": 3
+    },
+    "timer": {
+      "duration": 5,
+      "endTime": 1754653822435,
+      "startTime": 1754653522435
+    }
+  },
+  "Tafel-T9": {
+    "menuType": "dinner",
+    "Persons": 2,
+    "Pincode": "123",
+    "Status": "open",
+    "TableOrder": 46,
+    "URL": "https://njoyrestaurant.web.app/?rest=EnjoyBoxmeer&tafel=&pincode=123&pincode=",
+    "timer": {
+      "duration": 10,
+      "endTime": 1744482996113,
+      "startTime": 1744482396113
+    }
+  }
+}

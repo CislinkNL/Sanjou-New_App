@@ -1,0 +1,119 @@
+<!-- Qr-code behaviors and settings -->
+
+<script>
+
+  // ================================================================================================\\
+// Qr-code -- Qrcode - Generation - direct generate the qrcode without loading from database
+// ================================================================================================\\
+async function generateQRCode(tableId, codeUrl) {
+    try {
+        // Validate the `codeUrl`
+        if (!codeUrl) {
+            throw new Error("No valid URL provided for QR code generation.");
+        }
+
+        console.log(`Table number is ${tableId} and URL is ${codeUrl}`);
+
+        // Select the container where the QR code will be displayed
+        const qrCodeContainer = document.getElementById('qrCodeContainer');
+        qrCodeContainer.innerHTML = ""; // Clear any existing QR code
+
+        // Add the table ID as a paragraph
+        const tableIdText = document.createElement('p');
+        tableIdText.textContent = tableId;
+        qrCodeContainer.appendChild(tableIdText);
+
+        // Generate the QR code as a Data URL
+        const dataUrl = await QRCode.toDataURL(codeUrl, {
+            width: 300, // Set QR code size
+            margin: 2,  // Adjust margins
+            color: {
+                dark: "#00008B", // Dark blue foreground
+                light: "#FFFFFF" // White background
+            }
+        });
+
+        // Create an image element and set the generated QR code as its source
+        const img = document.createElement('img');
+        img.src = dataUrl;
+
+        // Append the image to the container
+        qrCodeContainer.appendChild(img);
+
+        // Create a "Print" button
+        const printButton = document.createElement('button');
+        printButton.textContent = 'Print';
+        printButton.className = 'btn btn-primary'; // Add styling class if needed
+
+        // Attach click event to the print button
+printButton.addEventListener('click', async () => {
+    try {
+        console.log(`Printing QR code for Table: ${tableId}`);
+
+        google.script.run
+            .withSuccessHandler(async (printerIp) => {
+                console.log(`Received printer IP: ${printerIp}`);
+
+                const payload = {
+                    tableName: tableId,
+                    url: codeUrl,
+                    printerIP: printerIp // Ensure the IP is properly set
+                };
+
+                console.log(`Sending QR code to IP: ${printerIp}`);
+
+                // Send data to the Python backend
+                const response = await fetch('https://njoy.cislink.nl/print-qr', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    const errorMessage = await response.text();
+                    throw new Error(`Failed to send data: ${errorMessage}`);
+                }
+
+                const result = await response.json();
+                console.log("QR Code sent successfully:", result);
+                alert('QR Code has been sent to the printer!');
+            })
+            .withFailureHandler((error) => {
+                console.error("Error retrieving printer IP:", error);
+                alert('Failed to get printer IP. Please try again.');
+            })
+            .getPrinterIp();
+
+    } catch (error) {
+        console.error("Error printing QR Code:", error.message);
+        alert('Failed to print QR Code. Please try again.');
+    }
+});
+
+
+        // Append the print button to the container
+        qrCodeContainer.appendChild(printButton);
+
+        // Show the QR Code container
+        qrCodeContainer.style.display = 'flex';
+
+        // Allow the user to close the QR code by clicking on the background
+        qrCodeContainer.onclick = function (e) {
+            // Close only if clicking outside the QR code image
+            if (e.target === qrCodeContainer) {
+                qrCodeContainer.style.display = 'none';
+            }
+        };
+
+    } catch (error) {
+        console.error("Error generating QR Code:", error.message);
+        alert("Failed to generate QR Code. Please check the URL and try again.");
+    } finally {
+        // Ensure the loading overlay is hidden regardless of success or failure
+        document.querySelector('#loadingOverlay').style.display = 'none';
+    }
+}
+
+</script>

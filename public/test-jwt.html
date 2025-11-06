@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT 认证测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status.online {
+            background: #28a745;
+            color: white;
+        }
+        .status.offline {
+            background: #dc3545;
+            color: white;
+        }
+        .status.pending {
+            background: #ffc107;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 JWT 认证测试页面</h1>
+        <p>此页面用于测试 Cloud Functions 后端的 JWT 认证流程</p>
+
+        <div class="test-section">
+            <h3>📋 配置状态</h3>
+            <div id="config-status">
+                <span class="status pending">检查中...</span>
+                <span id="config-details"></span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>🔑 JWT 会话管理</h3>
+            <button onclick="testCreateSession()">创建 JWT 会话</button>
+            <button onclick="testRefreshJWT()" id="refresh-btn" disabled>刷新 JWT</button>
+            <button onclick="clearJWT()">清除 JWT</button>
+            <div id="jwt-status">
+                <span class="status offline">未认证</span>
+                <span id="jwt-details"></span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>📦 订单创建测试</h3>
+            <button onclick="testCreateOrder()" id="order-btn" disabled>测试订单创建</button>
+            <div id="order-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📱 WhatsApp 通知测试</h3>
+            <button onclick="testWhatsAppNotification()" id="whatsapp-btn" disabled>测试 WhatsApp 通知</button>
+            <div id="whatsapp-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>📊 测试结果</h3>
+            <div id="test-log"></div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟 AppConfig
+        window.AppConfig = {
+            restName: "test-restaurant",
+            restUrlName: "test-restaurant",
+            tafelId: "Tafel-1",
+            functionsBaseUrl: "https://europe-west1-cislink-351208.cloudfunctions.net",
+            whatsappPhone: ["31612345678"],
+            configReady: true
+        };
+
+        // 模拟 order 对象
+        window.order = {
+            exportOrder: function(date) {
+                return {
+                    "test-sku-1": {
+                        quantity: 2,
+                        price: 12.50,
+                        taxRate: 21.0
+                    },
+                    "test-sku-2": {
+                        quantity: 1,
+                        price: 8.00,
+                        taxRate: 9.0
+                    }
+                };
+            },
+            exportOrderFromFirebase: async function(date, tafelId) {
+                return [
+                    [date.toISOString(), "test-sku-1", 2, 12.50, 21.0, "测试菜品1"],
+                    [date.toISOString(), "test-sku-2", 1, 8.00, 9.0, "测试菜品2"]
+                ];
+            }
+        };
+
+        // 模拟 Ui 对象
+        window.Ui = {
+            computeSummaryFromOrder: function(orderData) {
+                let netTotal = 0, taxTotal = 0, grossTotal = 0;
+                
+                for (const [sku, item] of Object.entries(orderData)) {
+                    const net = item.quantity * item.price;
+                    const tax = net * (item.taxRate / 100);
+                    netTotal += net;
+                    taxTotal += tax;
+                    grossTotal += net + tax;
+                }
+                
+                return {
+                    netTotal: parseFloat(netTotal.toFixed(2)),
+                    taxTotal: parseFloat(taxTotal.toFixed(2)),
+                    grossTotal: parseFloat(grossTotal.toFixed(2))
+                };
+            }
+        };
+
+        // 模拟 buildWhatsAppMessageText 函数
+        window.buildWhatsAppMessageText = function(Bestelling, tafelNr, invoiceNumber, orderLineCount) {
+            return `📩 测试订单通知\n桌号: ${tafelNr}\n发票号: ${invoiceNumber}\n项目数: ${orderLineCount}`;
+        };
+
+        // 全局变量
+        let sessionJWT = null;
+        let jwtExpiryTime = null;
+
+        // 日志函数
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('test-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `result ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        // 更新状态显示
+        function updateStatus() {
+            const jwtStatus = document.getElementById('jwt-status');
+            const jwtDetails = document.getElementById('jwt-details');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const orderBtn = document.getElementById('order-btn');
+            const whatsappBtn = document.getElementById('whatsapp-btn');
+
+            if (sessionJWT && jwtExpiryTime && Date.now() < jwtExpiryTime) {
+                const timeLeft = Math.ceil((jwtExpiryTime - Date.now()) / 1000);
+                jwtStatus.innerHTML = '<span class="status online">已认证</span>';
+                jwtDetails.textContent = `剩余时间: ${timeLeft}秒`;
+                refreshBtn.disabled = false;
+                orderBtn.disabled = false;
+                whatsappBtn.disabled = false;
+            } else {
+                jwtStatus.innerHTML = '<span class="status offline">未认证</span>';
+                jwtDetails.textContent = '';
+                refreshBtn.disabled = true;
+                orderBtn.disabled = true;
+                whatsappBtn.disabled = true;
+            }
+        }
+
+        // 检查配置
+        function checkConfig() {
+            const configStatus = document.getElementById('config-status');
+            const configDetails = document.getElementById('config-details');
+            
+            if (AppConfig.functionsBaseUrl) {
+                configStatus.innerHTML = '<span class="status online">已配置</span>';
+                configDetails.textContent = `后端地址: ${AppConfig.functionsBaseUrl}`;
+                log('✅ 配置检查通过', 'success');
+            } else {
+                configStatus.innerHTML = '<span class="status offline">未配置</span>';
+                configDetails.textContent = 'functionsBaseUrl 未设置';
+                log('❌ 配置检查失败', 'error');
+            }
+        }
+
+        // 测试创建 JWT 会话
+        async function testCreateSession() {
+            try {
+                log('🔄 开始创建 JWT 会话...', 'info');
+                
+                const response = await fetch(`${AppConfig.functionsBaseUrl}/createSession`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        rest: AppConfig.restName,
+                        tableId: AppConfig.tafelId,
+                        timestamp: Date.now()
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                if (!result.session_jwt) {
+                    throw new Error('响应中缺少 session_jwt');
+                }
+
+                sessionJWT = result.session_jwt;
+                jwtExpiryTime = Date.now() + (result.expires_in || 600) * 1000;
+                
+                log(`✅ JWT 会话创建成功，有效期: ${result.expires_in || 600}秒`, 'success');
+                updateStatus();
+                
+            } catch (error) {
+                log(`❌ JWT 会话创建失败: ${error.message}`, 'error');
+                console.error('JWT 创建错误:', error);
+            }
+        }
+
+        // 测试刷新 JWT
+        async function testRefreshJWT() {
+            try {
+                log('🔄 开始刷新 JWT 会话...', 'info');
+                
+                const response = await fetch(`${AppConfig.functionsBaseUrl}/createSession`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        rest: AppConfig.restName,
+                        tableId: AppConfig.tafelId,
+                        timestamp: Date.now()
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                if (!result.session_jwt) {
+                    throw new Error('响应中缺少 session_jwt');
+                }
+
+                sessionJWT = result.session_jwt;
+                jwtExpiryTime = Date.now() + (result.expires_in || 600) * 1000;
+                
+                log(`✅ JWT 会话刷新成功，有效期: ${result.expires_in || 600}秒`, 'success');
+                updateStatus();
+                
+            } catch (error) {
+                log(`❌ JWT 会话刷新失败: ${error.message}`, 'error');
+                console.error('JWT 刷新错误:', error);
+            }
+        }
+
+        // 清除 JWT
+        function clearJWT() {
+            sessionJWT = null;
+            jwtExpiryTime = null;
+            log('🗑️ JWT 会话已清除', 'info');
+            updateStatus();
+        }
+
+        // 测试订单创建
+        async function testCreateOrder() {
+            try {
+                log('🔄 开始测试订单创建...', 'info');
+                
+                const orderData = await order.exportOrderFromFirebase(new Date(), AppConfig.tafelId);
+                const orderSummary = Ui.computeSummaryFromOrder(order.exportOrder(new Date()));
+                
+                const payload = {
+                    rest: AppConfig.restName,
+                    tableId: AppConfig.tafelId,
+                    order: buildOrderPayload(orderData),
+                    clientOrderId: `${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+                    meta: {
+                        invoiceNumber: "TEST" + Date.now(),
+                        orderLineCount: orderData.length,
+                        grandTotal: orderSummary.grossTotal,
+                        netTotal: orderSummary.netTotal,
+                        taxTotal: orderSummary.taxTotal,
+                        clientTs: Date.now(),
+                        locale: navigator.language || "zh-CN",
+                        source: "web-mobile"
+                    }
+                };
+
+                log(`📦 订单载荷: ${JSON.stringify(payload, null, 2)}`, 'info');
+
+                const response = await fetch(`${AppConfig.functionsBaseUrl}/createOrder`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionJWT}`
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                log(`✅ 订单创建成功: ${JSON.stringify(result, null, 2)}`, 'success');
+                
+                document.getElementById('order-result').innerHTML = 
+                    `<div class="result success">✅ 订单创建成功\n${JSON.stringify(result, null, 2)}</div>`;
+                
+            } catch (error) {
+                log(`❌ 订单创建失败: ${error.message}`, 'error');
+                document.getElementById('order-result').innerHTML = 
+                    `<div class="result error">❌ 订单创建失败\n${error.message}</div>`;
+                console.error('订单创建错误:', error);
+            }
+        }
+
+        // 测试 WhatsApp 通知
+        async function testWhatsAppNotification() {
+            try {
+                log('🔄 开始测试 WhatsApp 通知...', 'info');
+                
+                const messageText = buildWhatsAppMessageText([], "1", "TEST123", 2);
+                const whatsappPayload = {
+                    rest: AppConfig.restName,
+                    tableId: AppConfig.tafelId,
+                    recipients: AppConfig.whatsappPhone,
+                    message: messageText,
+                    orderInfo: {
+                        tableNumber: "1",
+                        invoiceNumber: "TEST123",
+                        orderLineCount: 2
+                    }
+                };
+
+                log(`📱 WhatsApp 载荷: ${JSON.stringify(whatsappPayload, null, 2)}`, 'info');
+
+                const response = await fetch(`${AppConfig.functionsBaseUrl}/notify`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${sessionJWT}`
+                    },
+                    body: JSON.stringify(whatsappPayload),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                log(`✅ WhatsApp 通知发送成功: ${JSON.stringify(result, null, 2)}`, 'success');
+                
+                document.getElementById('whatsapp-result').innerHTML = 
+                    `<div class="result success">✅ WhatsApp 通知发送成功\n${JSON.stringify(result, null, 2)}</div>`;
+                
+            } catch (error) {
+                log(`❌ WhatsApp 通知失败: ${error.message}`, 'error');
+                document.getElementById('whatsapp-result').innerHTML = 
+                    `<div class="result error">❌ WhatsApp 通知失败\n${error.message}</div>`;
+                console.error('WhatsApp 通知错误:', error);
+            }
+        }
+
+        // 构建订单载荷
+        function buildOrderPayload(orderData) {
+            const order = {};
+            
+            orderData.forEach(item => {
+                const [timestamp, sku, quantity, price, taxRate, description] = item;
+                const itemSku = sku || `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                
+                order[itemSku] = {
+                    description: description || "No description",
+                    quantity: parseInt(quantity) || 0,
+                    unitPrice: parseFloat(price) || 0,
+                    taxRate: parseFloat(taxRate) || 0,
+                    timestamp: timestamp || new Date().toISOString()
+                };
+            });
+
+            return order;
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 测试页面已加载', 'info');
+            checkConfig();
+            updateStatus();
+            
+            // 定期更新状态
+            setInterval(updateStatus, 1000);
+        });
+    </script>
+</body>
+</html>

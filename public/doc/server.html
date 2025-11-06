@@ -1,0 +1,147 @@
+</div>
+
+<!-- FCB 功能按钮组 -->
+<div class="fcb-group">
+	<button class="fcb-btn" onclick="window.open('/update-log','_blank')">
+		<i class="fas fa-bullhorn"></i> 最新更新
+	</button>
+	<button class="fcb-btn" onclick="window.open('intro','_blank')">
+		<i class="fas fa-info-circle"></i> 系统介绍
+	</button>
+	<button class="fcb-btn" onclick="window.open('settings-help','_blank')">
+		<i class="fas fa-cogs"></i> 参数设置帮助
+	</button>
+</div>
+<style>
+.fcb-group {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.2em;
+	justify-content: center;
+	margin: 3em 0 1.5em 0;
+}
+.fcb-btn {
+	display: flex;
+	align-items: center;
+	gap: 0.6em;
+	background: linear-gradient(90deg, #e3e8f0 0%, #f8fafc 100%);
+	color: #1a73e8;
+	font-size: 1.05rem;
+	font-weight: 600;
+	padding: 0.85em 1.7em;
+	border: none;
+	border-radius: 1.7em;
+	box-shadow: 0 2px 8px #1a73e81a;
+	cursor: pointer;
+	transition: background 0.18s, color 0.18s, box-shadow 0.18s, transform 0.12s;
+}
+.fcb-btn i {
+	font-size: 1.2em;
+}
+.fcb-btn:hover, .fcb-btn:focus {
+	background: linear-gradient(90deg, #1a73e8 0%, #4285f4 100%);
+	color: #fff;
+	box-shadow: 0 4px 16px #1a73e844;
+	transform: translateY(-2px) scale(1.04);
+}
+@media (max-width: 600px) {
+	.fcb-group { flex-direction: column; gap: 0.7em; }
+	.fcb-btn { width: 100%; justify-content: center; }
+}
+</style>
+<!-- FontAwesome CDN for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" />
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>接单服务器操作指南</title>
+	<style>
+		body { font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif; background: #f8f9fa; color: #222; margin: 0; padding: 0; }
+		.container { max-width: 900px; margin: 32px auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px #0001; padding: 32px 24px; }
+		h1 { color: #1a73e8; font-size: 2.1rem; margin-bottom: 1.2em; }
+		h2 { color: #333; font-size: 1.3rem; margin-top: 2em; }
+		ol, ul { margin-left: 1.5em; }
+		img { max-width: 100%; border-radius: 8px; margin: 18px 0; box-shadow: 0 2px 8px #0002; }
+		.step { margin-bottom: 2.5em; }
+		.caption { color: #888; font-size: 0.98em; margin-bottom: 1.5em; }
+		@media (max-width: 600px) {
+			.container { padding: 10px 2vw; }
+			h1 { font-size: 1.3rem; }
+		}
+	</style>
+</head>
+<body>
+	<div class="container">
+		<h1>接单服务器操作指南</h1>
+		<div class="caption">本页面帮助你快速了解如何检查和管理 Mobiel Server（接单服务器）在 Windows 电脑上的运行状态。</div>
+
+		<div class="step">
+			<h2>1. 服务器自动启动说明</h2>
+			<ul>
+				<li>接单服务器会随电脑开机自动在后台运行。</li>
+				<li>你<strong>无需手动点击桌面上的 Mobiel Server 图标</strong>来启动服务器。</li>
+				<li>如遇特殊情况（如服务器未自动运行），可手动点击桌面图标尝试启动。</li>
+			</ul>
+			<img src="../img/bonserver-2.png" alt="桌面自动启动说明">
+		</div>
+
+		<div class="step">
+			<h2>2. 检查服务器是否在后台运行</h2>
+			<ol>
+				<li>在任务栏空白处右键，选择 <b>Taakbeheer</b>（任务管理器）。</li>
+				<li>在进程列表中，找到 <b>Boxmeer-new.exe</b>，显示在“后台进程”或“应用”下。</li>
+				<li>如图所示，出现该进程即为正常运行。</li>
+				<li>如未看到该进程，可重启电脑或手动点击桌面 Mobiel Server 图标。</li>
+			</ol>
+			<img src="../img/bonserver.png" alt="任务管理器查看服务器进程">
+		</div>
+
+		<div class="step">
+			<h2>常见问题</h2>
+			<ul>
+				<li>如遇服务器无法启动、进程不在列表、或下单异常，请联系技术支持。</li>
+				<li>建议在餐厅运营期间不要随意关闭 Mobiel Server 相关进程。</li>
+                <li>如发生听到进单的播报声音，但打印机未出单，请检查2号主机(餐厅中间那部电脑)是否已经开启。</li>
+				</ul>
+				</div>
+				<div style="text-align:center;margin-top:2.5em;">
+						<a href="https://wa.me/31619971032" target="_blank" class="wa-btn">
+								<svg viewBox="0 0 32 32" width="22" height="22" style="vertical-align:middle;margin-right:8px;"><circle fill="#25D366" cx="16" cy="16" r="16"/><path fill="#fff" d="M24.5 20.6c-.4-.2-2.3-1.1-2.6-1.2-.3-.1-.5-.2-.7.2-.2.4-.7 1.2-.9 1.4-.2.2-.3.3-.7.1-.4-.2-1.5-.6-2.8-1.8-1-1-1.7-2.2-1.9-2.6-.2-.4 0-.6.2-.8.2-.2.4-.5.6-.7.2-.2.2-.4.3-.7.1-.2 0-.5 0-.7 0-.2-.7-1.7-1-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.7.3-.2.2-1 1-1 2.4 0 1.4 1 2.7 1.1 2.9.1.2 2 3.1 4.8 4.2.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2-.1-.1-.3-.2-.7-.4z"/></svg>
+								<span style="vertical-align:middle;">联系技术支持（WhatsApp）</span>
+						</a>
+				</div>
+				<style>
+				.wa-btn {
+					display: inline-block;
+					background: linear-gradient(90deg, #25d366 0%, #128c7e 100%);
+					color: #fff;
+					font-size: 1.08rem;
+					font-weight: 600;
+					padding: 0.85em 1.7em;
+					border: none;
+					border-radius: 2em;
+					box-shadow: 0 2px 8px #25d36633;
+					text-decoration: none;
+					transition: background 0.18s, box-shadow 0.18s, transform 0.12s;
+					margin: 0 auto;
+					cursor: pointer;
+				}
+				.wa-btn:hover, .wa-btn:focus {
+					background: linear-gradient(90deg, #128c7e 0%, #25d366 100%);
+					color: #fff;
+					box-shadow: 0 4px 16px #128c7e44;
+					transform: translateY(-2px) scale(1.04);
+					text-decoration: none;
+				}
+				</style>
+			</ul>
+		</div>
+	</div>
+</body>
+</html>
+
+</html>
+
+</html>

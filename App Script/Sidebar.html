@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+
+        /* Logo */
+        .logo-container img {
+            display: block;
+            margin: 0 auto;
+            width: 60%;
+        }
+
+        /* Button Container */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            max-width: 300px;
+            margin: auto;
+        }
+
+        /* Default Button Styling */
+        .custom-button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        /* Unique Colors for Each Button */
+        .btn-menu { background-color: #ff5733; } /* Red */
+        .btn-translate { background-color: #ff9800; } /* Orange */
+        .btn-upload { background-color: #4CAF50; } /* Green */
+        .btn-manage { background-color: #9C27B0; } /* Purple */
+        .btn-reservations { background-color: #E91E63; } /* Pink */
+        .btn-download { background-color: #795548; } /* Brown */
+        .btn-order { background-color: #607D8B; } /* Dark Gray */
+
+        /* Hover Effects */
+        .custom-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+            opacity: 0.9;
+        }
+                /* QR Code display */
+        #qr-code {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+            width: 100%; /* Ensures it takes full width */
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+    <!-- Logo -->
+    <div class="logo-container">
+        <img src="https://cislink.nl/asianboulervard/ab-logo-gold.webp" />
+    </div> 
+    <br/>
+
+    <!-- Button Container -->
+    <div class="button-container">
+        <button class="custom-button btn-menu" onclick="google.script.run.insertMenukaartData()">Update Menu</button>
+        <button class="custom-button btn-translate" onclick="google.script.run.insertTranslationsToFirebase()">Update Vertalingen</button>
+        <button class="custom-button btn-upload" onclick="window.open('https://cislink.nl/upload/ab-foto.html', '_blank')">Upload menu foto's</button>
+        <button class="custom-button btn-manage" onclick="window.open('https://cislink.nl/asianboulervard/html/bestel.html?url=https://script.google.com/a/macros/cislink.nl/s/AKfycbwuMNN4G_OE6eaY_aFTmtUzXdBtNgLNPm18rmpJVaGur4Ma3fH4zlmmrkQ7yvvvSQ4tLg/exec?page=personeel', '_blank')">Tafel Beheer</button>
+        <button class="custom-button btn-reservations" onclick="alert('Nog niet gekoppeld!')">Reserveringen</button>
+        <button class="custom-button btn-download" onclick="window.open('https://drive.google.com/drive/folders/1WOrVwCwzxxj060aWOULRqcK_vgy8zarh?usp=sharing', '_blank')">QR-codes downloaden</button>
+        <button class="custom-button btn-order" onclick="generateQRCode()">Personeel Order App</button>
+    </div>
+   <div id="qr-code"></div>
+    <script>
+        function generateQRCode() {
+            // Clear previous QR code if exists
+            document.getElementById("qr-code").innerHTML = "";
+            const url ="https://cislink.web.app/index.html";
+
+
+                // Generate QR Code
+                new QRCode(document.getElementById("qr-code"), {
+                    text: url,
+                    width: 200,
+                    height: 200
+                });
+
+
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(cat:*)",
+      "Bash(curl -X POST https://whatsapp.cislink.nl/send -H \"Content-Type: application/json\" -d \"{\"\"phone\"\":\"\"31619971032\"\",\"\"message\"\":\"\"测试消息 from Claude\"\"}\" --max-time 10)",
+      "Bash(curl -X POST https://whatsapp.cislink.nl/send -H \"Content-Type: application/json\" -d \"{\"\"phone\"\":\"\"99999999999\"\",\"\"message\"\":\"\"测试消息\"\"}\" --max-time 10)",
+      "Bash(curl -X POST https://whatsapp.cislink.nl/send -H \"Content-Type: application/json\" -d \"{\"\"phone\"\":[\"\"31619971032\"\",\"\"31637153770\"\"],\"\"message\"\":\"\"多收件人测试\"\"}\" --max-time 10)",
+      "Bash(curl:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

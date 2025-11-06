@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Restaurant Config Admin</title>
+  <link rel="stylesheet" href="style-css.css" />
+  <link rel="stylesheet" href="notification-css.css" />
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRmQTQ2eYkavNh4C0pkggIaGbWz4iWE3Q",
+      authDomain: "cislink.firebaseapp.com",
+      databaseURL: "https://cislink-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "cislink",
+      storageBucket: "cislink.firebasestorage.app",
+      messagingSenderId: "295505146634",
+      appId: "1:295505146634:web:4cfa3c9e00344060f7c0f3",
+      measurementId: "G-CQ705CDDCV"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+  <style>
+    body { font-family: Roboto, Arial, sans-serif; background:#111; color:#eee; }
+    h1 { font-size:1.6rem; margin:1rem 0; }
+    .layout { display:grid; grid-template-columns: 320px 1fr 380px; gap:1rem; align-items:start; }
+    @media (max-width:1400px){ .layout { grid-template-columns: 300px 1fr; } .side-panel { grid-column:1 / -1; order:3; }}
+    /* Mobile layout adjustments */
+    @media (max-width: 900px){
+      .layout { display:block; }
+      .card { margin-bottom:1rem; }
+      .table-list { max-height:40vh; }
+      .side-panel { position:fixed; left:0; right:0; top:auto; bottom:-100%; max-height:75vh; overflow:auto; border-top-left-radius:16px; border-top-right-radius:16px; border:1px solid #333; box-shadow:0 -4px 12px #000a; transition: bottom .35s ease; z-index:999; }
+      .side-panel.mobile-open { bottom:0; }
+      .qr-box canvas.qr { width:100% !important; height:auto !important; }
+      header h1 { font-size:1.2rem; }
+      .table-item { padding:.65rem .8rem; }
+      .actions-row { gap:.4rem; }
+    }
+    .card { background:#1d1d1d; border:1px solid #333; border-radius:8px; padding:1rem; box-shadow:0 2px 4px #0006; }
+    .card h2 { font-size:1.1rem; margin-bottom:.75rem; color:gold; }
+    label { font-weight:500; margin-top:.5rem; }
+    input[type=text], input[type=number] { background:#222; border:1px solid #444; color:#eee; padding:.4rem .55rem; width:100%; border-radius:4px; }
+    input:focus { outline:2px solid gold; }
+    .config-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem .75rem; }
+    .config-grid .full { grid-column:1 / -1; }
+    .table-list { max-height:60vh; overflow:auto; border:1px solid #333; border-radius:6px; }
+    .table-item { display:flex; align-items:center; justify-content:space-between; padding:.45rem .65rem; border-bottom:1px solid #222; cursor:pointer; font-size:.9rem; }
+  .table-item:active { background:#303030; }
+    .table-item:last-child { border-bottom:none; }
+    .table-item:hover, .table-item.active { background:#262626; }
+    .table-item span.code { font-weight:600; color:#ddd; }
+    .badges { font-size:.75rem; display:flex; gap:.35rem; }
+    .badge { background:#333; padding:.2rem .45rem; border-radius:12px; }
+    .actions-row { display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.75rem; }
+    button { cursor:pointer; }
+    .btn-primary { background:goldenrod; border:none; }
+    .btn-outline { background:#222; color:#ccc; border:1px solid #444; }
+    .btn-danger { background:#7d1f1f; border:none; }
+    .btn-success { background:#2d6b2d; border:none; }
+    .qr-box { text-align:center; }
+    canvas.qr { background:#fff; padding:6px; border-radius:6px; }
+    .search-bar { margin-bottom:.6rem; display:flex; gap:.5rem; }
+    .side-panel { position:sticky; top:1rem; }
+    .toast-zone { position:fixed; top:10px; right:10px; z-index:9999; display:flex; flex-direction:column; gap:.5rem; }
+    .toast { background:#222; color:#eee; border-left:4px solid gold; padding:.6rem .9rem; border-radius:4px; font-size:.8rem; box-shadow:0 2px 4px #0008; animation:fadeIn .3s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-4px);} to { opacity:1; transform:translateY(0);} }
+    .muted { opacity:.65; font-size:.75rem; }
+    .flex { display:flex; }
+    .justify-between { justify-content:space-between; }
+    .gap { gap:.5rem; }
+  </style>
+</head>
+<body>
+  <div class="toast-zone" id="toast-zone"></div>
+  <header class="flex justify-between" style="align-items:center; flex-wrap:wrap; gap:1rem;">
+    <h1 data-i18n="title">餐厅配置管理 <span id="restTitle"></span></h1>
+    <div style="display:flex; gap:.5rem; align-items:center;">
+      <select id="langSelect" class="btn btn-outline btn-sm" style="min-width:90px;">
+        <option value="nl">Nederlands</option>
+        <option value="zh">中文</option>
+      </select>
+      <input id="restInput" placeholder="?rest= 参数 (自动)" data-i18n-ph="rest_input_ph" style="width:200px;" />
+      <button id="reloadBtn" class="btn btn-outline btn-sm" data-i18n="reload">Reload</button>
+    </div>
+  </header>
+  <main class="layout">
+    <section class="card">
+      <h2 data-i18n="global_config">全局配置 (实时)</h2>
+      <div class="config-grid" id="configForm">
+        <div>
+          <label data-i18n="round_time_label">round_time (分钟)</label>
+          <input type="number" min="1" id="cfg_round_time" data-field="round_time" />
+        </div>
+        <div>
+          <label data-i18n="allow_self_order_label">allow_self_order</label>
+          <input type="number" min="0" max="1" id="cfg_allow_self_order" data-field="allow_self_order" />
+        </div>
+        <div class="full">
+          <label data-i18n="server_access_label">server_access</label>
+          <input type="text" id="cfg_server_access" data-field="server_access" />
+        </div>
+        <div class="full">
+          <label data-i18n="titleImage_label">titleImage</label>
+          <input type="text" id="cfg_titleImage" data-field="titleImage" />
+        </div>
+      </div>
+      <div class="muted" style="margin-top:.5rem;" data-i18n="autosave_hint">字段改动 500ms 后自动写入 /[rest]/config</div>
+    </section>
+
+    <section class="card">
+      <h2 data-i18n="table_mgmt">桌号管理</h2>
+      <div class="search-bar">
+        <input id="tableSearch" placeholder="搜索 tafel..." data-i18n-ph="search_tables_ph" />
+        <button id="clearSearch" class="btn btn-outline btn-sm" data-i18n="clear">清空</button>
+      </div>
+      <div class="actions-row">
+        <button id="bulkRandomPin" class="btn btn-primary btn-sm" data-i18n="bulk_random_pin">全部随机 PIN</button>
+        <button id="bulkSetPin" class="btn btn-outline btn-sm" data-i18n="bulk_set_pin">全部设为值</button>
+        <input id="bulkFixedValue" placeholder="固定值" data-i18n-ph="bulk_fixed_ph" style="width:120px;" />
+      </div>
+      <div class="table-list" id="tableList"></div>
+    </section>
+
+    <aside class="card side-panel" id="detailPanel" style="display:none;">
+      <h2 id="detailTitle" data-i18n-dyn="detail_title" data-table="">桌详情</h2>
+      <div>
+        <label data-i18n="pincode_label">Pincode</label>
+        <input type="text" id="detailPincode" maxlength="4" />
+      </div>
+      <div style="margin-bottom:1rem;">
+        <label data-i18n="persons_label">Personen (人数)</label>
+        <input type="number" id="detailPersonen" min="0" />
+      </div>
+      <div class="qr-box" style="margin-top:1rem;">
+        <canvas id="qrCanvas" class="qr" width="220" height="220"></canvas>
+        <div style="margin-top:.5rem; display:flex; gap:.5rem; justify-content:center;">
+          <button id="downloadQR" class="btn btn-outline btn-sm" data-i18n="download_qr">下载 QR</button>
+          <button id="openLink" class="btn btn-outline btn-sm" data-i18n="open_link">打开链接</button>
+        </div>
+        <div class="muted" id="qrLink" style="margin-top:.35rem; word-break:break-all; font-size:.65rem;"></div>
+      </div>
+      <div class="actions-row" style="margin-top:1rem;">
+        <button id="saveDetail" class="btn btn-success btn-sm" data-i18n="save">保存</button>
+        <button id="closeDetail" class="btn btn-outline btn-sm" data-i18n="close">关闭</button>
+      </div>
+    </aside>
+  </main>
+  <script src="qrcode.min.js"></script>
+  <script src="admin-settings.js"></script>
+</body>
+</html>

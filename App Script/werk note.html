@@ -1,0 +1,206 @@
+<script>
+
+
+
+2024/11-18
+基本上是完成了所有的Personeel App 的所有工作，现在还有就是需要给客户端植入Firebase 实时更新的功能.
+
+
+2024/11-19
+实在太累了，觉也没睡，两天连续不睡，呵呵
+今天把页面防止手指太快，划出去刷新页面的问题。  -- 按理说应该很容易
+
+
+
+2024/11/23 20:50
+今天完美完成了同步多人点餐的功能打造，接下来应该是需要增添一些元素增加客户的体验，如当其他人加入餐后，得到相应的提示，包含，几个，什么 等等
+
+
+
+
+
+
+
+
+///////================================================
+`located in 'style-css.html'` 如果不想手指向下滑动太快，导致页面进行刷新动作，这两条要加进去，往往加入 'body' 即可
+1. 'touch-action: manipulation'
+This restricts the touch gestures to only essential actions like tapping or pinching, disabling default touch gestures such as scrolling or zooming.
+
+Key Benefits:
+Prevents gestures like double-tap to zoom or scroll.
+Allows basic touch functionality like tapping buttons.
+2. 'overscroll-behavior: contain'
+This prevents overscrolling from propagating beyond the element. For instance:
+
+No "bounce" effect at scroll boundaries (on mobile browsers like iOS Safari).
+Stops scroll chaining (scrolling one element won’t affect parent containers or the viewport).
+
+////////======================================================================================================================================
+
+
+
+
+
+
+//=========================================================================
+// 轮数归零的功能，可能要在menukaar里面使用
+//=========================================================================
+
+function deleteOrderNumber() {
+      const RestNameUrlElement = document.getElementById('restNaam');
+      const tafelIdElement = document.getElementById('tafelNummer');
+
+      // Validate DOM elements
+      if (!RestNameUrlElement || !tafelIdElement) {
+      console.error("Required DOM elements (restNaam or tafelNummer) are missing.");
+      return;
+      }
+
+      const RestNameUrl = RestNameUrlElement.innerText.trim();
+      const tafelId = `Tafel-${tafelIdElement.innerText.trim()}`; // Add "Tafel-" prefix
+      const OrderNumberPath = `${RestNameUrl}/tafel/${tafelId}/orderNumbers`;
+      const orderNumberRef = firebase.database().ref(OrderNumberPath);
+
+      // Ensure user is authenticated before performing delete
+    firebase.auth().onAuthStateChanged(user => {
+        if (user) {
+            console.log("User is authenticated:", user.uid);
+
+            // Delete the `newordernumber` field
+            orderNumberRef.remove()
+                .then(() => {
+                    console.log(`Order number successfully deleted from Firebase.`);
+                })
+                .catch(error => {
+                    console.error("Error deleting order number:", error);
+                });
+
+        } else {
+            console.error("User is not authenticated. Cannot delete order number.");
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>

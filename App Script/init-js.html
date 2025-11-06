@@ -1,0 +1,998 @@
+<!-- Firebase init -->
+
+
+<script>
+
+    // =======================================================================
+    // 1. Global Constants and Variables
+    // =======================================================================
+
+    const RestNameUrl = document.getElementById('restUrlName')?.innerText.trim();
+    // const BeheerWachtwoord = document.getElementById('beheer')?.innerText.trim();
+    let currentEditingCell = null; // Declare this at the top of your script, outside any function
+    window.currentEditingCell = null;
+    // 修复 previousData 未定义
+    let previousData = null;
+    window.previousData = previousData;
+
+    // =================== 全局部署loaddata实时监听 ===================
+    // 只要数据库有任何变化，自动回调loaddata刷新页面
+    if (typeof firebase !== 'undefined' && RestNameUrl) {
+        firebase.database().ref(`/${RestNameUrl}`).on('value', function(snapshot) {
+            if (typeof loadData === 'function') loadData();
+        });
+    }
+    // 帮助说明弹窗
+    let menuBtn = document.createElement('button');
+    menuBtn.id = 'menuEditorBtn';
+    menuBtn.textContent = 'Beheer menukaart';
+    menuBtn.className = 'btn btn-secondary';
+    // 居中靠底浮动
+    menuBtn.style = 'position:fixed;left:50%;transform:translateX(-50%);bottom:28px;z-index:3000;font-size:16px;padding:10px 18px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);';
+    menuBtn.onclick = function () {
+        // 如果面板已存在则不响应
+        if (document.getElementById('menuEditorPanel')) return;
+        showMenuEditorPanel();
+    };
+    document.body.appendChild(menuBtn);
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // =================== 菜单管理面板 ===================
+        function showMenuEditorPanel() {
+            // 创建遮罩和面板
+            let overlay = document.createElement('div');
+            overlay.id = 'menuEditorOverlay';
+            overlay.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2200;display:flex;align-items:center;justify-content:center;';
+            let panel = document.createElement('div');
+            panel.id = 'menuEditorPanel';
+            panel.style = 'background:#fff;border-radius:12px;max-width:900px;width:98vw;padding:28px 22px 18px 22px;box-shadow:0 4px 24px #0002;position:relative;display:flex;flex-direction:column;max-height:90vh;overflow-y:auto;';
+
+            // =================== 实时监听桌数据和订单历史变化 ===================
+            if (typeof firebase !== 'undefined' && RestNameUrl) {
+                firebase.database().ref(`/${RestNameUrl}/tafel`).on('value', function(snapshot) {
+                    if (typeof loadData === 'function') loadData();
+                });
+                firebase.database().ref(`/${RestNameUrl}/orders/history`).on('value', function(snapshot) {
+                    if (typeof loadData === 'function') loadData();
+                });
+            }
+            panel.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;position:relative;">
+                <div style="font-size:1.18em;font-weight:600;">Menukaart beheer</div>
+            </div>
+            <button id="closeMenuEditorBtn" style="position:fixed;top:10px;right:10px;background:#ff5252;color:#fff;border:none;font-size:1.3em;cursor:pointer;width:32px;height:32px;border-radius:50%;box-shadow:0 2px 8px #ff525244;display:flex;align-items:center;justify-content:center;transition:background 0.2s, color 0.2s;z-index:1000;outline:none;">&times;</button>
+            <div id="menuStickyBar" style="position:sticky;top:0;z-index:10;background:#fff;padding:10px 0 10px 0;display:flex;align-items:center;gap:10px;border-bottom:1px solid #eee;">
+                <input id="menuSearchInput" type="text" placeholder="Zoek op naam, ID of SKU..." style="width:180px;max-width:40vw;font-size:1em;padding:6px 10px;border-radius:6px;border:1px solid #ccc;transition:width 0.2s;">
+                <button id="menuHelpBtn" class="btn btn-link" style="width:36px;height:36px;min-width:36px;min-height:36px;line-height:36px;border-radius:50%;background:#2196f3;color:#fff;font-size:1.2em;box-shadow:0 2px 8px #2196f344;border:none;display:flex;align-items:center;justify-content:center;transition:background 0.2s;cursor:pointer;">?</button>
+                <div style="flex:1 1 auto;"></div>
+                <button id="saveMenuEditorBtn" class="btn btn-primary" style="font-size:1.1em;min-width:140px;max-width:40vw;">Bevestigen & Opslaan</button>
+            </div>
+            <div>
+                <div id="menuEditorContent" style="flex:1 1 0;overflow-y:auto;padding:10px 0 18px 0;"></div>
+            </div>
+        `;
+            overlay.appendChild(panel);
+            document.body.appendChild(overlay);
+
+            const closeBtn = document.getElementById('closeMenuEditorBtn');
+            closeBtn.onclick = function () {
+                panel.remove();
+                overlay.remove();
+                // 关闭时显示按钮
+                const menuBtn = document.getElementById('menuEditorBtn');
+                if (menuBtn) menuBtn.style.display = '';
+            };
+            // 打开时隐藏按钮
+            const menuBtn = document.getElementById('menuEditorBtn');
+            if (menuBtn) menuBtn.style.display = 'none';
+
+            // 悬停高亮
+            closeBtn.onmouseenter = function () { this.style.background = '#c62828'; this.style.color = '#fffde7'; };
+            closeBtn.onmouseleave = function () { this.style.background = '#ff5252'; this.style.color = '#fff'; };
+
+            // 帮助说明弹窗
+            function showMenuHelpDialog() {
+                let helpOverlay = document.createElement('div');
+                helpOverlay.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.18);z-index:2200;display:flex;align-items:center;justify-content:center;';
+                let helpBox = document.createElement('div');
+                helpBox.style = 'background:#fff;border-radius:12px;max-width:420px;width:92vw;padding:28px 22px 18px 22px;box-shadow:0 4px 24px #0002;position:relative;';
+                helpBox.innerHTML = `
+                <div style="font-size:1.18em;font-weight:600;margin-bottom:10px;">Instructie voor menukaartbeheer</div>
+                <div style="font-size:1em;line-height:1.7;color:#333;">
+                    <ul style='padding-left:18px;margin:0 0 10px 0;'>
+                        <li>Gebruik de zoekbalk om snel een gerecht of drankje te vinden op naam, ID of SKU.</li>
+                        <li>Klik op een veld om de gegevens van een gerecht te bewerken. De actieve rij wordt geel gemarkeerd.</li>
+                        <li>Rijen met een rode achtergrond zijn momenteel niet beschikbaar voor verkoop.</li>
+                        <li>Pas prijs, status, groep, btw en omschrijving direct aan in de tabel.</li>
+                        <li>Klik op "Bevestigen & Opslaan" om alle wijzigingen in één keer op te slaan.</li>
+                        <li>Sluit het venster met de knop "Sluiten" rechtsboven.</li>
+                    </ul>
+                    <b>Let op:</b> Wijzigingen worden pas doorgevoerd na het opslaan.<br>
+                    Status "Uit" betekent niet beschikbaar voor verkoop.
+                </div>
+                <button id="closeMenuHelpBtn" style="position:absolute;top:10px;right:12px;background:transparent;border:none;font-size:1.3em;cursor:pointer;color:#888;">&times;</button>
+            `;
+                helpOverlay.appendChild(helpBox);
+                document.body.appendChild(helpOverlay);
+                document.getElementById('closeMenuHelpBtn').onclick = function () {
+                    helpOverlay.remove();
+                };
+                helpOverlay.onclick = function (e) {
+                    if (e.target === helpOverlay) helpOverlay.remove();
+                };
+            }
+            const helpBtn = panel.querySelector('#menuHelpBtn');
+            if (helpBtn) {
+                helpBtn.onclick = showMenuHelpDialog;
+                // 悬停高亮
+                helpBtn.onmouseenter = function () { this.style.background = '#1769aa'; };
+                helpBtn.onmouseleave = function () { this.style.background = '#2196f3'; };
+            }
+
+            // 响应式调整搜索框宽度
+            const searchInput = panel.querySelector('#menuSearchInput');
+            function adjustSearchWidth() {
+                if (window.innerWidth < 600) {
+                    searchInput.style.width = '110px';
+                    searchInput.style.maxWidth = '60vw';
+                } else if (window.innerWidth < 900) {
+                    searchInput.style.width = '140px';
+                    searchInput.style.maxWidth = '30vw';
+                } else {
+                    searchInput.style.width = '180px';
+                    searchInput.style.maxWidth = '40vw';
+                }
+            }
+            adjustSearchWidth();
+            window.addEventListener('resize', adjustSearchWidth);
+
+            // 加载菜单数据
+            const restName = document.getElementById('restUrlName')?.innerText?.trim() || RestNameUrl;
+            const contentDiv = panel.querySelector('#menuEditorContent');
+            contentDiv.innerHTML = '<div style="color:#888;padding:24px;text-align:center;">Laden...</div>';
+            firebase.database().ref(`/${restName}/menukaart`).once('value').then(snapshot => {
+                const val = snapshot.val();
+                if (!val) {
+                    contentDiv.innerHTML = '<div style="color:#888;padding:24px;text-align:center;">Geen menukaart gevonden</div>';
+                    return;
+                }
+                // 适配 menukaart.json 结构（对象，key为id），并提取id/sku
+                let items = Object.entries(val).map(([k, v]) => ({ ...v, _key: k, _id: v.id || k, _sku: v.sku || '' }));
+                // 按 sortingNrm 或 id 排序
+                items.sort((a, b) => (a.sortingNrm || a.id || 0) - (b.sortingNrm || b.id || 0));
+
+                // 渲染表格函数，支持过滤和高亮
+                function highlightText(text, keyword) {
+                    if (!keyword) return text;
+                    const re = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\\]\\]/g, '\\$&') + ')', 'ig');
+                    return String(text).replace(re, '<span style="background: #ffe066;">$1</span>');
+                }
+                function renderMenuTable(filter = '') {
+                    let html = `<div style='overflow-x:auto;'><table style='width:100%;border-collapse:collapse;font-size:16px;min-width:900px;'>
+                    <thead><tr style='background:#f1f3f7;'>
+                        <th style='padding:8px 4px;'>Afbeelding</th>
+                        <th style='padding:8px 4px;'>Naam</th>
+                        <th style='padding:8px 4px;'>Prijs (€)</th>
+                        <th style='padding:8px 4px;'>Status</th>
+                        <th style='padding:8px 4px;'>Groep</th>
+                        <th style='padding:8px 4px;'>BTW (%)</th>
+                        <th style='padding:8px 4px;'>Omschrijving</th>
+                    </tr></thead><tbody>`;
+                    let filterLower = filter.trim().toLowerCase();
+                    let found = false;
+                    items.forEach((item, idx) => {
+                        // 搜索过滤：名称、id、sku
+                        let match = false;
+                        if (!filterLower) match = true;
+                        else {
+                            if ((item.description || '').toLowerCase().includes(filterLower) ||
+                                (item._id || '').toString().toLowerCase().includes(filterLower) ||
+                                (typeof item._sku === 'string' ? item._sku : (item._sku !== undefined && item._sku !== null ? String(item._sku) : '')).toLowerCase().includes(filterLower)) {
+                                match = true;
+                            }
+                        }
+                        if (!match) return;
+                        found = true;
+                        // status: 'beschikbaar' <-> Actief, 'niet beschikbaar' <-> Uit
+                        let statusValue = (item.status === 'beschikbaar') ? 'actief' : 'uit';
+                        let priceVal = (item.price === undefined || item.price === null || item.price === '' || Number(item.price) === 0) ? 0 : item.price;
+                        // niet beschikbaar 行背景色
+                        let trBg = (item.status === 'niet beschikbaar') ? 'background:#f7eaea;' : '';
+                        html += `<tr data-key='${item._key}' style='${trBg}'>
+                            <td style='padding:7px 4px;'><img src='${item.image || ''}' alt='' style='width:48px;height:48px;object-fit:cover;border-radius:6px;background:#f6f6f6;'/></td>
+                            <td style='padding:7px 4px;'><input type='text' class='menu-name' value="${item.description || ''}" style='width:120px;max-width:100%;font-size:15px;'/></td>
+                            <td style='padding:7px 4px;'><input type='number' class='menu-price' value="${priceVal}" min='0' step='0.01' style='width:70px;font-size:15px;'/></td>
+                            <td style='padding:7px 4px;'>
+                                <select class='menu-status' style='font-size:15px;'>
+                                    <option value='actief' ${statusValue === 'actief' ? 'selected' : ''}>Actief</option>
+                                    <option value='uit' ${statusValue === 'uit' ? 'selected' : ''}>Uit</option>
+                                </select>
+                            </td>
+                            <td style='padding:7px 4px;'>
+                                <select class='menu-group' style='font-size:15px;width:90px;'>
+                                    <option value='geen' ${item.group === 'geen' ? 'selected' : ''}>geen</option>
+                                    <option value='groep1' ${item.group === 'groep1' ? 'selected' : ''}>groep1</option>
+                                    <option value='groep2' ${item.group === 'groep2' ? 'selected' : ''}>groep2</option>
+                                    <option value='groep3' ${item.group === 'groep3' ? 'selected' : ''}>groep3</option>
+                                    <option value='groep4' ${item.group === 'groep4' ? 'selected' : ''}>groep4</option>
+                                    <option value='groep5' ${item.group === 'groep5' ? 'selected' : ''}>groep5</option>
+                                </select>
+                            </td>
+                            <td style='padding:7px 4px;'><input type='number' class='menu-tax' value="${item.taxRate || ''}" min='0' max='99' step='1' style='width:60px;font-size:15px;'/></td>
+                            <td style='padding:7px 4px;'><textarea class='menu-allergy' style='width:180px;max-width:100%;font-size:15px;min-height:32px;resize:vertical;overflow:hidden;' rows='1'>${item.allergy || ''}</textarea></td>
+                    </tr>`;
+                    });
+                    if (!found) {
+                        html += `<tr><td colspan='7' style='text-align:center;color:#888;padding:24px;'>Geen resultaten gevonden</td></tr>`;
+                    }
+                    html += '</tbody></table></div>';
+                    contentDiv.innerHTML = html;
+                }
+
+                // 初始渲染
+                renderMenuTable();
+                // 自动高度调整 & 移动端适配 + 高亮编辑行效果
+                function enhanceTableUI() {
+                    const allergyInputs = contentDiv.querySelectorAll('.menu-allergy');
+                    allergyInputs.forEach(textarea => {
+                        textarea.addEventListener('input', function () {
+                            this.style.height = 'auto';
+                            this.style.height = (this.scrollHeight) + 'px';
+                        });
+                        // 初始化高度
+                        textarea.style.height = 'auto';
+                        textarea.style.height = (textarea.scrollHeight) + 'px';
+                    });
+                    // 响应式布局优化（移动端）
+                    if (window.innerWidth < 600) {
+                        allergyInputs.forEach(textarea => {
+                            textarea.style.width = '98vw';
+                            textarea.style.maxWidth = '98vw';
+                        });
+                        const table = contentDiv.querySelector('table');
+                        if (table) table.style.minWidth = '0';
+                    }
+                    // 高亮编辑行效果
+                    const allInputs = contentDiv.querySelectorAll('input, textarea, select');
+                    allInputs.forEach(input => {
+                        input.addEventListener('focus', function () {
+                            const tr = this.closest('tr');
+                            if (tr) tr.style.background = '#fffbe6';
+                        });
+                        input.addEventListener('blur', function () {
+                            const tr = this.closest('tr');
+                            if (tr) {
+                                // 如果是“niet beschikbaar”则恢复为灰色，否则清空
+                                const statusSel = tr.querySelector('.menu-status');
+                                if (statusSel && statusSel.value === 'uit') {
+                                    tr.style.background = '#f7eaea';
+                                } else {
+                                    tr.style.background = '';
+                                }
+                            }
+                        });
+                    });
+                }
+                enhanceTableUI();
+
+                // 搜索框事件
+                const searchInput = document.getElementById('menuSearchInput');
+                if (searchInput) {
+                    // 实时搜索
+                    searchInput.addEventListener('input', function () {
+                        renderMenuTable(this.value);
+                        enhanceTableUI();
+                    });
+                    // 回车直接搜索并聚焦第一个结果
+                    searchInput.addEventListener('keydown', function (e) {
+                        if (e.key === 'Enter') {
+                            renderMenuTable(this.value);
+                            enhanceTableUI();
+                            // 聚焦第一个可编辑框
+                            setTimeout(() => {
+                                const firstInput = contentDiv.querySelector('tbody tr input, tbody tr textarea');
+                                if (firstInput) firstInput.focus();
+                            }, 0);
+                        }
+                    });
+                }
+            });
+
+            // 保存按钮
+            // 保存按钮事件需重新绑定
+            panel.querySelector('#saveMenuEditorBtn').onclick = async function () {
+                const tableRows = panel.querySelectorAll('tbody tr');
+                let updatePromises = [];
+                tableRows.forEach(tr => {
+                    const key = tr.getAttribute('data-key');
+                    const description = tr.querySelector('.menu-name').value.trim();
+                    let price = parseFloat(tr.querySelector('.menu-price').value);
+                    if (isNaN(price)) price = 0;
+                    let statusSel = tr.querySelector('.menu-status').value;
+                    let status = (statusSel === 'actief') ? 'beschikbaar' : 'niet beschikbaar';
+                    const group = tr.querySelector('.menu-group').value;
+                    let taxRate = parseFloat(tr.querySelector('.menu-tax').value);
+                    if (isNaN(taxRate)) taxRate = 0;
+                    const allergy = tr.querySelector('.menu-allergy').value.trim();
+                    // 只更新该项，不影响其它字段
+                    updatePromises.push(
+                        firebase.database().ref(`/${restName}/menukaart/${key}`).update({
+                            description, price, status, group, taxRate, allergy
+                        })
+                    );
+                });
+                try {
+                    await Promise.all(updatePromises);
+                    alert('Menukaart succesvol bijgewerkt!');
+                    panel.remove();
+                    overlay.remove();
+                    // 关闭时显示按钮
+                    const menuBtn = document.getElementById('menuEditorBtn');
+                    if (menuBtn) menuBtn.style.display = '';
+                } catch {
+                    alert('Fout bij het opslaan!');
+                }
+            };
+        }
+        // 让外部可访问 showMenuEditorPanel
+        window.showMenuEditorPanel = showMenuEditorPanel;
+
+    });
+
+
+
+    const centerPanelOverlay = document.getElementById('centerPanelOverlay');
+    if (centerPanelOverlay) {
+        centerPanelOverlay.addEventListener('click', function () {
+            const centerPanel = document.getElementById('centerPanel');
+            if (centerPanel) centerPanel.style.display = 'none';
+            centerPanelOverlay.style.display = 'none';
+        });
+    }
+
+    const centerPanel2Overlay = document.getElementById('centerPanel2Overlay');
+    if (centerPanel2Overlay) {
+        centerPanel2Overlay.addEventListener('click', function () {
+            const centerPanel2 = document.getElementById('centerPanel2');
+            if (centerPanel2) centerPanel2.style.display = 'none';
+            centerPanel2Overlay.style.display = 'none';
+        });
+    }
+
+    const centerPanel3Overlay = document.getElementById('centerPanel3Overlay');
+    if (centerPanel3Overlay) {
+        centerPanel3Overlay.addEventListener('click', function () {
+            const centerPanel3 = document.getElementById('centerPanel3');
+            if (centerPanel3) centerPanel3.style.display = 'none';
+            centerPanel3Overlay.style.display = 'none';
+        });
+    }
+    // ...existing code...
+    // =============================
+    // Handle personPanel confirm button click (robust)
+    // =============================
+    function handleConfirmButtonClick() {
+        const personCountInput = document.getElementById('personCount');
+        if (!personCountInput) return;
+        const newCount = parseInt(personCountInput.value);
+        if (isNaN(newCount) || newCount < 1) {
+            alert('Aantal personen moet minimaal 1 zijn.');
+            return;
+        }
+        // Get the current table key from the selected cell
+        let cell = window.currentEditingCell;
+        if (!cell || !cell.parentElement) {
+            // 尝试自动查找选中的 cell
+            const selected = document.querySelector('.persons-cell.selected');
+            if (selected) cell = selected;
+        }
+        if (!cell) {
+            alert('Selecteer eerst een tafel.');
+            return;
+        }
+        // Find the table row and key (use data-table-id for robust key)
+        const tr = cell.parentElement;
+        let key = null;
+        if (tr && tr.dataset && tr.dataset.tableId) {
+            key = tr.dataset.tableId;
+        }
+        if (!key) {
+            if (typeof showNotification === 'function') showNotification('Tafelnaam niet gevonden.', 'error');
+            return;
+        }
+        // Update Firebase
+        firebase.database().ref(`/${RestNameUrl}/tafel/${key}/Persons`).set(newCount)
+            .then(function () {
+                // Update UI
+                if (tr.children[1]) tr.children[1].textContent = newCount;
+                hidePersonPanel();
+                if (typeof showNotification === 'function') showNotification('Aantal personen bijgewerkt', 'success');
+            })
+            .catch(function () {
+                alert('Fout bij het opslaan van aantal personen!');
+            });
+    }
+
+    async function initializePreviousData() {
+        const RestNameUrlElement = document.getElementById('restUrlName');
+        const RestNameUrl = RestNameUrlElement ? RestNameUrlElement.innerText.trim() : null;
+
+        if (!RestNameUrl) {
+            console.error("The restaurant URL (RestNameUrl) is not defined.");
+            return;
+        }
+
+        // Fetch the initial data from Firebase
+        const snapshot = await firebase.database().ref(`/${RestNameUrl}/tafel`).once('value');
+        const data = snapshot.val();
+
+        if (data) {
+            previousData = { ...data }; // Store the initial data as the old state
+            console.log('Initial previousData loaded:', previousData);
+        } else {
+            console.warn(`No data found for '/${RestNameUrl}/tafel'.`);
+        }
+    }
+
+    // =======================================================================
+    // Load data from firebase
+    // =======================================================================
+    async function loadData() {
+        try {
+            const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '';
+
+            const snapshot = await firebase.database().ref(`/${RestNameUrl}/tafel`).once('value');
+            const data = snapshot.val();
+            if (!data) {
+                console.warn(`No data found for '/${RestNameUrl}/tafel'.`);
+                return;
+            }
+
+            const sortedData = Object.entries(data)
+                .sort((a, b) => {
+                    const orderA = parseInt(a[1].TableOrder || 0, 10);
+                    const orderB = parseInt(b[1].TableOrder || 0, 10);
+                    return orderA - orderB;
+                });
+
+            sortedData.forEach(([key, rowData]) => {
+                const status = rowData.Status ? rowData.Status.toLowerCase() : 'unknown';
+
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-table-id', key);
+                tr.setAttribute('data-table-order', rowData.TableOrder || 0);
+
+                // Table Name
+                const tableNameCell = document.createElement('td');
+                tableNameCell.classList.add('table-name');
+                tableNameCell.innerHTML = `<span style="font-weight:600; cursor:pointer; color:#007bff; text-decoration:underline;">${key}</span>`;
+                // 添加点击事件，弹出历史订单面板
+                tableNameCell.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    showOrderHistoryPanel(key);
+                });
+                tr.appendChild(tableNameCell);
+                // =================== 订单历史面板 ===================
+                function showOrderHistoryPanel(tableId) {
+                    // 若已存在面板，先移除
+                    let oldPanel = document.getElementById('orderHistoryPanel');
+                    if (oldPanel) oldPanel.remove();
+
+                    // 创建遮罩
+                    let overlay = document.createElement('div');
+                    overlay.id = 'orderHistoryOverlay';
+                    overlay.style.position = 'fixed';
+                    overlay.style.top = '0';
+                    overlay.style.left = '0';
+                    overlay.style.width = '100vw';
+                    overlay.style.height = '100vh';
+                    overlay.style.background = 'rgba(0,0,0,0.35)';
+                    overlay.style.zIndex = '2000';
+                    overlay.onclick = function () {
+                        document.getElementById('orderHistoryPanel')?.remove();
+                        overlay.remove();
+                    };
+                    document.body.appendChild(overlay);
+
+                    // 创建面板
+                    let panel = document.createElement('div');
+                    panel.id = 'orderHistoryPanel';
+                    panel.style.position = 'fixed';
+                    panel.style.top = '50%';
+                    panel.style.left = '50%';
+                    panel.style.transform = 'translate(-50%, -50%)';
+                    panel.style.background = '#fff';
+                    panel.style.borderRadius = '12px';
+                    panel.style.boxShadow = '0 8px 32px rgba(0,0,0,0.18)';
+                    panel.style.padding = '28px 24px 18px 24px';
+                    panel.style.zIndex = '2001';
+                    panel.style.minWidth = '320px';
+                    panel.style.maxWidth = '90vw';
+                    panel.style.maxHeight = '80vh';
+                    panel.style.overflowY = 'auto';
+
+                    panel.innerHTML = `<div style="font-size:1.18em;font-weight:600;margin-bottom:12px;">${tableId} - Bestelgeschiedenis</div><div id="orderHistoryContent" style="min-height:40px;">Laden...</div><button id="closeOrderHistoryBtn" style="margin-top:18px;float:right;" class="btn btn-primary">Sluiten</button>`;
+                    document.body.appendChild(panel);
+                    document.getElementById('closeOrderHistoryBtn').onclick = function () {
+                        panel.remove();
+                        overlay.remove();
+                    };
+
+                    // 加载数据
+                    const restName = document.getElementById('restUrlName')?.innerText?.trim() || RestNameUrl;
+                    firebase.database().ref(`/${restName}/tafel/${tableId}/orders/history`).once('value').then(snapshot => {
+                        const val = snapshot.val();
+                        const contentDiv = document.getElementById('orderHistoryContent');
+                        if (!val) {
+                            contentDiv.innerHTML = '<div style="color:#888;">Geen bestelgeschiedenis</div>';
+                            return;
+                        }
+                        // 统一转为数组，倒序
+                        let orders = [];
+                        if (Array.isArray(val)) {
+                            orders = val.map((item, idx) => item ? { ...item, _idx: idx } : null).filter(x => x).reverse();
+                        } else {
+                            orders = Object.entries(val)
+                                .map(([k, v]) => (typeof v === 'object' ? { ...v, _key: k } : { _key: k, value: v }))
+                                .sort((a, b) => {
+                                    // 按key倒序
+                                    const ka = isNaN(a._key) ? a._key : Number(a._key);
+                                    const kb = isNaN(b._key) ? b._key : Number(b._key);
+                                    if (ka < kb) return 1;
+                                    if (ka > kb) return -1;
+                                    return 0;
+                                });
+                        }
+                        if (orders.length === 0) {
+                            contentDiv.innerHTML = '<div style="color:#888;">Geen bestelgeschiedenis</div>';
+                            return;
+                        }
+                        // 渲染表格
+                        let table = `<table style="width:100%;border-collapse:collapse;font-size:17px;">
+                        <thead><tr style="background:#f1f3f7;">
+                                <th style='padding:8px 4px;font-size:17px;' title='Tijd'>
+                                    <svg width="20" height="20" fill="none" stroke="#555" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="#555" stroke-width="1.6"/><path d="M12 7v5l3 3" stroke="#555" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                </th>
+                                <th style='padding:8px 4px;font-size:17px;' title='Gerechten'>
+                                    <svg width="20" height="20" fill="none" stroke="#555" stroke-width="1.6" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#555" stroke-width="1.6"/><path d="M7 9h10M7 13h6" stroke="#555" stroke-width="1.6" stroke-linecap="round"/></svg>
+                                </th>
+                                <th style='padding:8px 4px;font-size:17px;' title='Aantal'>
+                                    <svg width="20" height="20" fill="none" stroke="#555" stroke-width="1.6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke="#555" stroke-width="1.6"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#555">#</text></svg>
+                                </th>
+                                <th style='padding:8px 4px;font-size:17px;' title='Factuurnummer'>
+                                    <svg width="20" height="20" fill="none" stroke="#555" stroke-width="1.6" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2" stroke="#555" stroke-width="1.6"/><path d="M9 8h6M9 12h6M9 16h2" stroke="#555" stroke-width="1.6" stroke-linecap="round"/></svg>
+                                </th>
+                        </tr></thead><tbody>`;
+                        orders.forEach(order => {
+                            // 时间格式化
+                            let date = order.date || order.timestamp || order._key || '';
+                            let timeStr = '';
+                            if (typeof date === 'number' && date > 1000000000) {
+                                try {
+                                    let d = new Date(date * 1000);
+                                    timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                                } catch (e) { }
+                            } else if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}T/)) {
+                                try {
+                                    let d = new Date(date);
+                                    timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+                                } catch (e) { }
+                            } else {
+                                timeStr = date;
+                            }
+                            let invoice = order.invoiceNumber || order.invoice || order._key || '';
+                            let total = order.totalItems || order.total || '';
+                            // 菜品明细
+                            let details = '';
+                            if (order.orderDetails && Array.isArray(order.orderDetails)) {
+                                details = order.orderDetails.map(d => {
+                                    if (Array.isArray(d)) {
+                                        // 结构如 [时间, id, 数量, 单价, 税, 名称]
+                                        let name = d[5] || '';
+                                        let count = d[2] || 1;
+                                        return name ? `<div style='font-size:16px;line-height:1.6;'>${name.trim()} <span style='color:#888;font-size:15px;'>x${count}</span></div>` : '';
+                                    } else if (typeof d === 'object') {
+                                        let name = d.name || d.title || d.product || '';
+                                        let count = d.qty || d.count || d.quantity || 1;
+                                        return name ? `<div style='font-size:16px;line-height:1.6;'>${name} <span style='color:#888;font-size:15px;'>x${count}</span></div>` : `<div style='font-size:15px;'>${JSON.stringify(d)}</div>`;
+                                    } else {
+                                        return '';
+                                    }
+                                }).filter(Boolean).join('');
+                            } else {
+                                details = '-';
+                            }
+                            table += `<tr style="border-bottom:1px solid #eee;">
+                    <td style='padding:8px 4px;vertical-align:top;font-size:16px;'>${timeStr}</td>
+                    <td style='padding:8px 4px;vertical-align:top;'>${details}</td>
+                    <td style='padding:8px 4px;vertical-align:top;font-size:16px;'>${total}</td>
+                    <td style='padding:8px 4px;vertical-align:top;font-size:16px;'>${invoice}</td>
+                </tr>`;
+                        });
+                        table += '</tbody></table>';
+                        contentDiv.innerHTML = table;
+                    }).catch(() => {
+                        document.getElementById('orderHistoryContent').innerHTML = '<div style="color:#f00;">Laden mislukt</div>';
+                    });
+                }
+
+                // Persons
+                const tdPers = document.createElement('td');
+                tdPers.className = 'persons-cell';
+                tdPers.textContent = rowData.Persons || 0;
+
+                tr.appendChild(tdPers);
+
+                // Status
+                const tdStatus = document.createElement('td');
+                tdStatus.innerHTML =
+                    `
+                <label class="switch">
+                    <input type="checkbox" ${status === 'open' ? 'checked' : ''} onchange="toggleStatus(event, '${key}')">
+                    <span class="slider round"></span>
+                </label>`;
+                tr.appendChild(tdStatus);
+
+                // Pincode
+                const tdPin = document.createElement('td');
+                tdPin.className = 'pincode-cell';
+                tdPin.textContent = rowData.Pincode || 'N/A';
+                tdPin.onclick = () => showPincodePanel(tdPin);
+                tr.appendChild(tdPin);
+
+                // Menu type
+                const tdMenu = document.createElement('td');
+                tdMenu.innerHTML =
+                    `
+                <select class="menuTypeSelect">
+                    <option value="lunch">lunch</option>
+                    <option value="dinner">dinner</option>
+                </select>`;
+                tr.appendChild(tdMenu);
+
+                const select = tdMenu.querySelector('.menuTypeSelect');
+                select.value = rowData.menuType || 'lunch';
+                select.onchange = function () {
+                    firebase.database()
+                        .ref(`/${RestNameUrl}/tafel/${key}/menuType`)
+                        .set(this.value)
+                        .then(() => { if (typeof showNotification === 'function') showNotification(`Menu voor ${key} gewijzigd naar ${this.value}`, 'success'); })
+                        .catch(() => { if (typeof showNotification === 'function') showNotification('Fout bij het wijzigen van menuType', 'error'); });
+                };
+
+                // Hidden URL
+                const tdUrl = document.createElement('td');
+                tdUrl.style.display = 'none';
+                tdUrl.textContent = rowData.URL || 'No URL';
+                tr.appendChild(tdUrl);
+
+                tableBody.appendChild(tr);
+
+                // 检查 orders/history 是否有内容，设置高亮
+                try {
+                    firebase.database().ref(`/${RestNameUrl}/tafel/${key}/orders/history`).once('value').then(snapshot => {
+                        const historyVal = snapshot.val();
+                        const tds = tr.querySelectorAll('td');
+                        if (historyVal && (Array.isArray(historyVal) ? historyVal.length > 0 : Object.keys(historyVal).length > 0)) {
+                            tds.forEach(td => td.classList.add('table-has-history'));
+                        } else {
+                            tds.forEach(td => td.classList.remove('table-has-history'));
+                        }
+                    });
+                } catch (e) {
+                    const tds = tr.querySelectorAll('td');
+                    tds.forEach(td => td.classList.remove('table-has-history'));
+                }
+            });
+            // 关键：每次表格渲染后都重新绑定批量按钮
+            if (window.bindBatchActionButtons) window.bindBatchActionButtons();
+        } catch (error) {
+            console.error('Error loading data:', error);
+        }
+        if (window.bindBatchActionButtons) window.bindBatchActionButtons();
+
+        // ✅ 立即激活事件监听
+        setupEventHandlers();  // ←←← 添加这一行
+
+    }
+
+    /**
+     * 🏷️ Adds the "Bezet" label to the table name (Prevents duplicates)
+     */
+    function addBezetLabel(tableNameCell) {
+        // 只变色和加粗，不加标签和文字
+        tableNameCell.style.color = '#ff9900'; // 橘黄色
+        tableNameCell.style.fontWeight = 'bold';
+        // 移除旧标签（兼容老数据）
+        var oldLabel = tableNameCell.querySelector('.status-label');
+        if (oldLabel) oldLabel.remove();
+    }
+
+    /**
+     * ❌ Removes the "Bezet" label when `/orders/history` is empty
+     */
+    function removeBezetLabel(tableNameCell) {
+        const existingLabel = tableNameCell.querySelector('.status-label');
+        if (existingLabel) {
+            existingLabel.remove();
+        }
+    }
+
+
+
+    //===========================================================
+    //Event Handlers for the panels button and 
+    //===========================================================
+
+    function setupEventHandlers() {
+        const personPanel = document.getElementById('personPanel');
+        const decreaseButton = document.getElementById('decreaseButton');
+        const increaseButton = document.getElementById('increaseButton');
+        const confirmButton = document.getElementById('confirmButton');
+        const personCountInput = document.getElementById('personCount');
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.addEventListener('keyup', handleSearch);
+
+        const dataTable = document.getElementById('dataTable');
+        if (confirmButton) confirmButton.addEventListener('click', () => {
+            handleConfirmButtonClick();
+        });
+
+        if (decreaseButton) decreaseButton.addEventListener('click', () => {
+            if (!personCountInput) return;
+            let count = Math.max(1, parseInt(personCountInput.value) - 1);
+            personCountInput.value = count;
+        });
+
+        if (increaseButton) increaseButton.addEventListener('click', () => {
+            if (!personCountInput) return;
+            let count = parseInt(personCountInput.value) + 1;
+            personCountInput.value = count;
+        });
+
+        if (dataTable) dataTable.addEventListener('click', function (event) {
+            if (event.target.nodeName === "TD") {
+                if (event.target.classList.contains('pincode-cell')) {
+                    // ...原有pincode弹窗逻辑...
+                    var pincodePanel = document.getElementById('pincodePanel');
+                    if (pincodePanel) {
+                        var rect = event.target.getBoundingClientRect();
+                        pincodePanel.style.display = 'block';
+                        pincodePanel.style.left = (rect.left + window.scrollX) + 'px';
+                        pincodePanel.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+                    }
+
+                    // Patch A: 记录上下文到面板 dataset
+                    const tr = event.target.closest('tr');
+                    const tafelId = tr ? tr.getAttribute('data-table-id') : '';
+                    let dbUrl = '';
+                    if (tr && tr.cells && tr.cells.length >= 6) {
+                        dbUrl = tr.cells[5].textContent.trim(); // 第6列隐藏URL
+                    }
+                    window.currentEditingCell = event.target;
+                    if (pincodePanel) {
+                        pincodePanel.dataset.tableId = tafelId || '';
+                        pincodePanel.dataset.dbUrl = dbUrl || '';
+                        pincodePanel.dataset.pincode = event.target.textContent.trim() || '';
+                    }
+
+                    // 输入框聚焦（你原来就有）
+                    var newPincodeInput = document.getElementById('newPincodeInput');
+                    if (newPincodeInput) {
+                        newPincodeInput.value = '';
+                        setTimeout(function () { newPincodeInput.focus(); }, 100);
+                        newPincodeInput.onkeydown = function (e) {
+                            if (e.key === 'Enter' || e.keyCode === 13) {
+                                e.preventDefault();
+                                var saveBtn = document.getElementById('savePincodeButton');
+                                if (saveBtn) saveBtn.click();
+                            }
+                        };
+                    } else {
+                        alert('Pincode invoerveld niet gevonden!');
+                    }
+                } else if (event.target.closest('.persons-cell')) {
+                    const td = event.target.closest('.persons-cell');
+                    if (!td || td.querySelector('input')) return; // 已有输入框则不重复添加
+
+                    const oldValue = td.textContent.trim();
+                    const tr = td.parentElement;
+                    const key = tr?.dataset?.tableId || null;
+                    if (!key) return;
+
+                    td.innerHTML = `<input type="number" min="1" style="width:48px;text-align:center;" value="${oldValue}">`;
+                    const input = td.querySelector('input');
+                    input.focus();
+                    input.select();
+
+                    let timer = null;
+                    input.addEventListener('input', function () {
+                        if (timer) clearTimeout(timer);
+                        timer = setTimeout(function () {
+                            const newVal = parseInt(input.value);
+                            if (!isNaN(newVal) && newVal > 0 && newVal != oldValue) {
+                                firebase.database().ref(`/${RestNameUrl}/tafel/${key}/Persons`).set(newVal)
+                                    .then(() => {
+                                        td.textContent = newVal;
+                                        if (typeof showNotification === 'function') showNotification('Aantal personen bijgewerkt', 'success');
+                                    })
+                                    .catch(() => {
+                                        td.textContent = oldValue;
+                                        if (typeof showNotification === 'function') showNotification('Fout bij het opslaan van aantal personen!', 'error');
+                                    });
+                            } else if (!isNaN(newVal) && newVal > 0) {
+                                td.textContent = newVal;
+                            } else {
+                                td.textContent = oldValue;
+                            }
+                        }, 2000);
+                    });
+
+                    input.addEventListener('blur', function () {
+                        if (timer) clearTimeout(timer);
+                        const newVal = parseInt(input.value);
+                        if (!isNaN(newVal) && newVal > 0 && newVal != oldValue) {
+                            firebase.database().ref(`/${RestNameUrl}/tafel/${key}/Persons`).set(newVal)
+                                .then(() => {
+                                    td.textContent = newVal;
+                                    if (typeof showNotification === 'function') showNotification('Aantal personen bijgewerkt', 'success');
+                                })
+                                .catch(() => {
+                                    td.textContent = oldValue;
+                                    if (typeof showNotification === 'function') showNotification('Fout bij het opslaan van aantal personen!', 'error');
+                                });
+                        } else if (!isNaN(newVal) && newVal > 0) {
+                            td.textContent = newVal;
+                        } else {
+                            td.textContent = oldValue;
+                        }
+                    });
+                }
+
+            }
+        });
+
+
+        //========================================================================
+        // Click outside to hide panels, but allow them to open when appropriate
+        //========================================================================
+        //========================================================================
+        // Click outside to hide panels, and open person panel when clicking the cell
+        //========================================================================
+        window.addEventListener('click', function (e) {
+            var personPanel = document.getElementById('personPanel');
+            var pincodePanel = document.getElementById('pincodePanel');
+
+            var isTd = e.target && e.target.nodeName === "TD";
+            var isPersonCell = isTd && e.target.cellIndex === 1;
+            var isPincodeCell = isTd && e.target.classList.contains('pincode-cell');
+
+            // 点击“人数”单元格 → 打开人数面板（如果你还在用它）
+            if (isPersonCell && typeof showPersonPanel === 'function') {
+                showPersonPanel(e.target, (e.target.textContent || '').trim());
+            }
+
+            // 点面板外 → 关人数面板（仅在存在且可见时处理，避免误清 currentEditingCell）
+            if (personPanel && personPanel.style.display === 'block') {
+                var outsidePerson = !personPanel.contains(e.target) && !isPersonCell;
+                if (outsidePerson && typeof hidePersonPanel === 'function') {
+                    hidePersonPanel();
+                }
+            }
+
+            // 点面板外且不是 pincode-cell → 关 pincode 面板
+            var outsidePin = !pincodePanel || (!pincodePanel.contains(e.target) && !isPincodeCell);
+            if (outsidePin && pincodePanel) {
+                pincodePanel.style.display = 'none';
+            }
+        });
+        // 单台pincode保存按钮事件绑定，确保只绑定一次
+        var saveBtn = document.getElementById('savePincodeButton');
+        if (saveBtn) {
+            saveBtn.onclick = function () {
+                var newPin = document.getElementById('newPincodeInput').value.trim();
+                if (!newPin) {
+                    if (typeof showNotification === 'function') showNotification('Pincode mag niet leeg zijn!', 'error');
+                    return;
+                }
+                // 关键：同步window.currentEditingCell
+                var cell = currentEditingCell || window.currentEditingCell;
+                window.currentEditingCell = cell;
+                if (!cell) {
+                    if (typeof showNotification === 'function') showNotification('Selecteer eerst een tafel (klik op pincode-cell).', 'error');
+                    return;
+                }
+                var tr = cell.parentElement;
+                var key = tr && tr.querySelector('.table-name') ? tr.querySelector('.table-name').innerText.trim() : null;
+                if (!key) {
+                    if (typeof showNotification === 'function') showNotification('Tafelnaam niet gevonden.', 'error');
+                    return;
+                }
+                firebase.database().ref(`/${RestNameUrl}/tafel/${key}/Pincode`).set(newPin)
+                    .then(function () {
+                        cell.textContent = newPin;
+                        document.getElementById('pincodePanel').style.display = 'none';
+                        if (typeof showNotification === 'function') showNotification('Pincode gewijzigd', 'success');
+                    })
+                    .catch(function () {
+                        if (typeof showNotification === 'function') showNotification('Fout bij het opslaan van pincode!', 'error');
+                    });
+            };
+        }
+
+        // 批量pincode弹窗确认按钮
+        var confirmButtonPass = document.getElementById('confirmButtonPass');
+        if (confirmButtonPass) {
+            confirmButtonPass.onclick = function (e) {
+                e.preventDefault();
+                var newPin = document.getElementById('pincodeInput').value.trim();
+                var password = document.getElementById('passwordInput').value.trim();
+                if (!newPin || !password) {
+                    alert('Wachtwoord和pincode都不能为空!');
+                    return;
+                }
+                // 显示loading遮罩
+                var loadingMask = document.createElement('div');
+                loadingMask.id = 'batchPincodeLoadingMask';
+                loadingMask.style = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.25);z-index:9999;display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;';
+                loadingMask.innerHTML = '<div style="padding:32px 48px;background:rgba(0,0,0,0.7);border-radius:12px;">批量更改中，请稍候...</div>';
+                document.body.appendChild(loadingMask);
+
+                // 校验密码（如需后端校验可补充）
+                // 批量写入：构建multi-location update对象
+                var tableRows = document.querySelectorAll('#dataTable tbody tr');
+                var updates = {};
+                tableRows.forEach(function (tr) {
+                    var keyCell = tr.querySelector('.table-name');
+                    if (!keyCell) return;
+                    var key = keyCell.innerText.trim();
+                    updates[`/${RestNameUrl}/tafel/${key}/Pincode`] = newPin;
+                });
+                firebase.database().ref().update(updates)
+                    .then(function () {
+                        document.getElementById('centerPanel').style.display = 'none';
+                        document.getElementById('centerPanelOverlay').style.display = 'none';
+                        if (typeof showNotification === 'function') showNotification('Alle pincodes gewijzigd', 'success');
+                        // 批量更改成功后刷新页面数据
+                        if (typeof loadData === 'function') loadData();
+                    })
+                    .catch(function () {
+                        alert('Fout bij het batch opslaan van pincodes!');
+                    })
+                    .finally(function () {
+                        // 无论成功失败都移除loading
+                        var mask = document.getElementById('batchPincodeLoadingMask');
+                        if (mask) mask.remove();
+                    });
+            };
+        }
+
+
+        // =========================================================================
+        // Handel search function, search the tables with key words, nummber or char
+        //==========================================================================
+        function handleSearch() {
+            const searchQuery = this.value.toLowerCase();
+            const tableRows = document.getElementById('dataTable').getElementsByTagName('tbody')[0].rows;
+            Array.from(tableRows).forEach(row => {
+                const cells = Array.from(row.cells);
+                const matchesQuery = cells.some(cell => cell.textContent.toLowerCase().includes(searchQuery));
+                row.style.display = matchesQuery ? '' : 'none';
+            });
+        }
+
+        function setupConfirmButton() {
+            const confirmButton = document.getElementById('confirmButton');
+            if (confirmButton) {
+                confirmButton.addEventListener('click', handleConfirmButtonClick);
+            } else {
+                console.error("Confirm button not found");
+            }
+        }
+
+        // <-- Add this closing brace to properly end setupEventHandlers
+    }
+
+</script>

@@ -1,0 +1,632 @@
+
+
+
+<!-- Style Sheet  -->
+<style>
+/* 强制高亮有历史订单的桌号单元格，兼容所有屏幕和表格样式 */
+#dataTable td.table-has-history {
+  background-color: #ffeeba !important;
+  font-weight: bold !important;
+}
+@media (max-width: 700px) {
+  #dataTable td.table-has-history {
+    background-color: #ffeeba !important;
+    font-weight: bold !important;
+  }
+}
+  .fab-search {
+  width: 220px;
+  max-width: 80vw;
+  height: 44px;
+  border-radius: 24px;
+  border: none;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
+  padding: 0 18px;
+  font-size: 16px;
+  margin-bottom: 18px;
+  outline: none;
+  transition: box-shadow 0.2s, border 0.2s;
+  color: #222;
+  display: block;
+}
+.fab-search:focus {
+  box-shadow: 0 4px 18px rgba(0,123,255,0.18);
+  border: 1.5px solid #007bff;
+}
+
+@media (max-width: 700px) {
+  .fab-search {
+    width: 140px;
+    font-size: 14px;
+    padding: 0 10px;
+    height: 38px;
+    margin-bottom: 10px;
+  }
+}
+#fab-container {
+  position: fixed;
+  right: 24px;
+  bottom: 32px;
+  z-index: 1002;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: flex-end;
+}
+
+.fab-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #007bff;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,123,255,0.18), 0 1.5px 4px rgba(0,0,0,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+  outline: none;
+  position: relative;
+}
+.fab-btn:active {
+  background: #0056b3;
+  transform: scale(0.96);
+}
+.fab-btn .fab-label {
+  display: none;
+  position: absolute;
+  right: 70px;
+  background: #222;
+  color: #fff;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 15px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  pointer-events: none;
+}
+.fab-btn:hover .fab-label {
+  display: block;
+}
+
+@media (max-width: 700px) {
+  #fab-container {
+    right: 12px;
+    bottom: 16px;
+    gap: 12px;
+  }
+  .fab-btn {
+    width: 46px;
+    height: 46px;
+    font-size: 20px;
+  }
+  .fab-btn .fab-label {
+    right: 54px;
+    font-size: 13px;
+    padding: 5px 10px;
+  }
+}
+
+/* 搜索框单独一行 */
+#header {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  background: transparent;
+  margin-bottom: 18px;
+  justify-content: flex-start;
+}
+
+/* 隐藏原按钮区，按钮用FAB替代 */
+#header button, #header .btn, #header .btn-primary {
+  display: none !important;
+}
+
+  body {
+
+    overscroll-behavior: contain;
+    touch-action: manipulation;
+
+
+  }
+    .container {
+      margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    max-width: 1200px; /* or any desired width */
+    }
+
+    #dataTable {
+    margin-top: 50px;
+    width: 100%;
+}
+#header {
+    display: flex;
+    align-items: center; /* Align items vertically in the center */
+    gap: 10px; /* Adds some spacing between elements */
+       background-color: #fff;  /* Optional: Add a background to the header */
+       z-index:999;
+}
+
+#searchInput {
+    height: 40px; /* Adjust the height as needed */
+    padding: 5px 10px; /* Add padding for better spacing inside the input */
+    font-size: 16px; /* Ensure the text inside matches button text size */
+    border-radius: 4px; /* For rounded corners (optional) */
+    border: 1px solid #ccc; /* Optional: input border styling */
+}
+#passwordInputTafel {
+width:78%;
+
+}
+
+
+button {
+    height: 40px;
+    font-size: 16px;
+    padding: 0 15px;
+    border-radius: 4px;
+    border: none;
+    white-space: normal; /* Allow text to wrap */
+    word-break: break-word;
+    line-height: 1.2;
+    min-width: 80px;
+    max-width: 100%;
+}
+
+@media (max-width: 600px) {
+
+body {
+  overscroll-behavior: contain;
+  touch-action: manipulation;
+  background: #f7f8fa;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  color: #222;
+}
+
+.container {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  max-width: 900px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 24px 12px 32px 12px;
+}
+
+#header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  background: transparent;
+  margin-bottom: 18px;
+  justify-content: flex-start;
+}
+
+#searchInput {
+  height: 38px;
+  padding: 6px 14px;
+  font-size: 16px;
+  border-radius: 6px;
+  border: 1px solid #d0d7de;
+  background: #f9f9fb;
+  transition: border 0.2s;
+}
+#searchInput:focus {
+  border: 1.5px solid #007bff;
+  outline: none;
+}
+
+button, .btn, .btn-primary {
+  height: 38px;
+  font-size: 15px;
+  padding: 0 18px;
+  border-radius: 6px;
+  border: none;
+  background: #007bff;
+  color: #fff;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0,123,255,0.06);
+  transition: background 0.2s, box-shadow 0.2s;
+  white-space: normal;
+  word-break: break-word;
+  min-width: 90px;
+  max-width: 100%;
+  margin-bottom: 0;
+}
+button:hover, .btn-primary:hover {
+  background: #0056b3;
+  color: #fff;
+}
+
+/* Table Styles */
+#tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+  background: transparent;
+}
+
+#dataTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  margin-top: 12px;
+}
+
+#dataTable th, #dataTable td {
+  padding: 10px 8px;
+  text-align: center;
+  font-size: 15px;
+}
+
+#dataTable th {
+  background: #f1f3f7;
+  color: #222;
+  font-weight: 600;
+  border-bottom: 2px solid #e3e6eb;
+  letter-spacing: 0.02em;
+}
+
+#dataTable tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+}
+#dataTable tr:hover {
+  background: #f5faff;
+}
+
+#dataTable td {
+  background: #fff;
+  vertical-align: middle;
+}
+
+#dataTable td select, #dataTable td input {
+  font-size: 15px;
+  border-radius: 4px;
+  border: 1px solid #d0d7de;
+  padding: 2px 6px;
+}
+}
+@media (max-width: 700px) {
+  .container {
+    padding: 8px 2px 18px 2px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  #header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  button, .btn, .btn-primary {
+    font-size: 14px;
+    min-width: 60px;
+    padding: 2px 6px;
+    height: auto;
+    white-space: normal;
+    word-break: break-word;
+  }
+  #dataTable th, #dataTable td {
+    font-size: 13px;
+    padding: 7px 3px;
+  }
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+.switch input { 
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider.round {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+  z-index: 100 !important;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+}
+#personPanel {
+  display: none;
+  position: absolute;
+  z-index: 100;
+  background-color: white;
+  border: 1px solid #ddd;
+  padding: 10px;
+  transform: scale(1.2) translateX(-28px); /* Add translateX to the transform */
+  transform-origin: top left; /* Adjust as needed to control the scaling origin */
+}
+
+#pincodePanel {
+  display: none;
+  position: absolute;
+  z-index: 100;
+  background-color: white;
+  border: 1px solid #ddd;
+  padding: 10px;
+  transform: scale(1.1) translateX(-120px); /* Add translateX to the transform */
+  transform-origin: top right; /* Adjust as needed to control the scaling origin */
+}
+
+#newPincodeInput {
+width:100px;
+
+}
+#qrCodeContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column; /* Stack content vertically */
+    justify-content: center; /* Center content vertically */
+    align-items: center; /* Center content horizontally */
+    height: 100vh; /* Full viewport height */
+    width: 100vw; /* Full viewport width */
+    background-color: rgba(0, 0, 0, 0.9); /* Semi-transparent background */
+    z-index: 998; /* Ensure it's above other content */
+    display: none; /* Hidden by default */
+}
+
+#qrCodeContainer p {
+    font-size: 35px; /* Adjust size as necessary */
+    font-weight: 600;
+    color: white; /* Text color */
+    margin-bottom: 20px; /* Space between the table ID and the QR code */
+    text-align: center; /* Center align the text */
+}
+
+#qrCodeContainer img {
+    max-width: 350px; /* Limit the size of the QR code */
+    max-height: 350px;
+    margin: 0 auto; /* Center the image horizontally */
+}
+
+#imgHolder {
+
+display: flex;
+    justify-content: center; /* Center horizontally */
+    align-items: center; /* Center vertically */
+    height: 100vh; /* Make the container take the full viewport height */
+    width: 100vw; /* Make the container take the full viewport width */
+    position: fixed; /* Position it relative to the viewport */
+    top: 0;
+    left: 0;
+
+}
+
+
+    #passwordMessage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1050; /* Ensure it's above other content */
+  background-color: white;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 80%; /* Set the width to 80% of the viewport */
+  font-size: 1.5em; 
+  display: none; /* Start hidden */
+}
+
+@media (max-width: 767px) {
+
+.container {
+  margin-left: 0;
+  }
+  .btn-primary {
+    width: 18%;
+    font-size: 0.8rem;
+  }
+  #searchInput {
+    width: 20%;
+    height: 40px; /* Adjust the height as needed */
+    padding: 5px 10px; /* Add padding for better spacing inside the input */
+    font-size: 16px; /* Ensure the text inside matches button text size */
+    border-radius: 4px; /* For rounded corners (optional) */
+    border: 1px solid #ccc; /* Optional: input border styling */
+}
+.table {
+
+    width: 100%;
+}
+
+button {
+  padding: 8px 15px;
+}
+
+}
+tableWrapper {
+    margin-left: 0; /* Align the table to the left */
+    margin-right: auto; /* Prevent the table from centering or moving to the right */
+    margin-top: 100px; /* Adjust the margin to avoid overlap with the buttons */
+    overflow-x: auto; /* Ensures that if the table is too wide, it will scroll */
+
+
+}
+
+
+#personPanel, #pincodePanel, #centerPanel, #centerPanel2 {
+    z-index: 999; /* Ensure modals are above other elements */
+}
+
+#centerPanel2 {
+    display: none; /* Initially hidden */
+    position: fixed; /* Fixed to the viewport */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center the panel */
+    background-color: #ffffff; /* White background */
+    padding: 20px; /* Inner spacing */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+    width: 300px; /* Adjust width */
+    text-align: center; /* Center-align text and buttons */
+    border: 1px solid #ddd; /* Optional border for subtle styling */
+}
+
+/* Style the buttons */
+#centerPanel button {
+    display: inline-block; /* Ensure buttons are inline */
+    padding: 10px 20px; /* Adjust padding for a comfortable size */
+    font-size: 16px; /* Slightly larger font for better readability */
+    font-weight: bold; /* Make text bold */
+    border: none; /* Remove default border */
+    border-radius: 5px; /* Rounded corners for a modern look */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover effect */
+}
+
+/* Style the "Sluit alles" button */
+#sluitAllesBtn {
+    background-color: #e74c3c; /* Red background */
+    color: #ffffff; /* White text */
+    margin-right: 10px; /* Space between buttons */
+}
+
+#sluitAllesBtn:hover {
+    background-color: #c0392b; /* Darker red on hover */
+    box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3); /* Add shadow on hover */
+}
+
+/* Style the "Open alles" button */
+#openAllesBtn {
+    background-color: #2ecc71; /* Green background */
+    color: #ffffff; /* White text */
+}
+
+#openAllesBtn:hover {
+    background-color: #27ae60; /* Darker green on hover */
+    box-shadow: 0 4px 8px rgba(46, 204, 113, 0.3); /* Add shadow on hover */
+}
+
+/* Add smooth fade-in/out for the panel */
+#centerPanel.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+#centerPanel.fade-out {
+    animation: fadeOut 0.3s ease-in-out;
+}
+
+/* Notification container styling */
+#notificationContainer {
+  position: fixed;
+  top: 55px; /* Adjust vertical positioning */
+  right: 5px; /* Adjust horizontal positioning */
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Default notification styling */
+.notification {
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 18px;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Notification types */
+.notification.info {
+  background-color: #2196f3; /* Blue */
+}
+
+.notification.success {
+  background-color: #4caf50; /* Green */
+}
+
+.notification.error {
+  background-color: #f44336; /* Red */
+}
+
+/* Keyframes for fade animations */
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(10px);
+  }
+}
+
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -60%);
+  }
+}
+
+</style>

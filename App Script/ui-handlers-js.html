@@ -1,0 +1,390 @@
+
+<script>
+// app script 兼容的 $ 简写
+function $(id) {
+  return document.getElementById(id);
+}
+
+// === Single table pincode panel: bind once, robust ===
+document.addEventListener('DOMContentLoaded', function() {
+
+  // 防止点击面板内部被全局“点击关闭”拦截
+  var panel = $('pincodePanel');
+  if (panel) panel.addEventListener('click', function(e) { e.stopPropagation(); });
+
+  // —— 用 onclick，避免与 showPincodePanel 里的 onclick 叠加造成双触发 ——
+  var saveBtn = $('savePincodeButton');
+  if (saveBtn) {
+    saveBtn.onclick = function() {
+      var panel = $('pincodePanel');
+      var input = $('newPincodeInput');
+      var newPin = input && input.value ? input.value.replace(/^\s+|\s+$/g, '') : '';
+
+      if (!newPin) { alert('Pincode mag niet leeg zijn!'); return; }
+
+      // 关键：优先用面板 dataset 的 tableId
+      var tafelId = panel && panel.dataset ? panel.dataset.tableId : '';
+      if (!tafelId) {
+        // 兜底：再退回到 currentEditingCell 推断
+        var cell = window.currentEditingCell || null;
+        if (cell) {
+          var tr = cell.closest('tr');
+          tafelId = tr ? tr.getAttribute('data-table-id') : '';
+        }
+      }
+      if (!tafelId) { alert('Selecteer eerst een tafel (klik op pincode-cell).'); return; }
+
+      // 写库：只改该桌的 Pincode
+      firebase.database().ref('/' + RestNameUrl + '/tafel/' + tafelId + '/Pincode')
+        .set(newPin)
+        .then(function() {
+          // UI 同步：优先用 currentEditingCell，否则按 tafelId 找行更新
+          var cell = window.currentEditingCell;
+          if (cell) {
+            cell.textContent = newPin;
+          } else {
+            var cellEl = document.querySelector('tr[data-table-id="'+ tafelId +'"] .pincode-cell');
+            if (cellEl) cellEl.textContent = newPin;
+          }
+          // 同步写回 dataset.pincode（给 Qr-code 按钮用）
+          if (panel && panel.dataset) panel.dataset.pincode = newPin;
+
+          if (typeof hidePincodePanel === 'function') hidePincodePanel();
+          else { var p = $('pincodePanel'); if (p) p.style.display = 'none'; }
+
+          if (typeof showNotification === 'function')
+            showNotification('Pincode gewijzigd', 'success');
+        });
+      }
+    }
+  // Qr-code 按钮绑定（分离出 saveBtn 处理器外部）
+  var qrBtn = document.getElementById('generateQrCodeButton');
+  if (qrBtn) {
+    qrBtn.onclick = function() {
+      var panel = document.getElementById('pincodePanel');
+      var input = document.getElementById('newPincodeInput');
+
+      // 1) 先用面板 dataset（打开面板时已写好）
+      var tafelId = panel && panel.dataset && panel.dataset.tableId ? panel.dataset.tableId : '';
+      var dbUrl   = panel && panel.dataset && panel.dataset.dbUrl   ? panel.dataset.dbUrl   : '';
+      var pin     = (input && input.value ? input.value.replace(/^\s+|\s+$/g, '') : '')
+                 || (panel && panel.dataset && panel.dataset.pincode ? panel.dataset.pincode : '');
+
+      console.log('[QR] dataset:', panel ? panel.dataset : null, 'tafelId=', tafelId, 'dbUrl=', dbUrl, 'pin=', pin);
+
+      if (!tafelId) { alert('请先点击某一行的 pincode-cell。'); return; }
+
+      // 2) 若无隐藏URL，按固定规则拼基础地址
+      var baseUrl = dbUrl;
+      if (!baseUrl) {
+        var rest = '';
+        if (typeof RestNameUrl !== 'undefined' && RestNameUrl) rest = RestNameUrl;
+        else {
+          var restEl = document.getElementById('restUrlName');
+          if (restEl && restEl.textContent) rest = restEl.textContent.replace(/^\s+|\s+$/g, '');
+        }
+        baseUrl = 'https://njoyrestaurant.web.app/?rest=' + encodeURIComponent(rest)
+                + '&tafel=' + encodeURIComponent(tafelId);
+      }
+
+      // 3) 追加/覆盖 pincode 参数
+      var codeUrl = baseUrl.indexOf('pincode=') >= 0
+        ? baseUrl.replace(/([?&])pincode=[^&]*/, '$1pincode=' + encodeURIComponent(pin))
+        : baseUrl + (baseUrl.indexOf('?') >= 0 ? '&' : '?') + 'pincode=' + encodeURIComponent(pin);
+
+      console.log('[QR] codeUrl=', codeUrl);
+
+      // 4) 生成二维码
+      try {
+        generateQRCode(tafelId, codeUrl);
+      } catch (e) {
+        console.error('generateQRCode failed:', e);
+        alert('QR-code genereren mislukt!');
+        return;
+      }
+
+      var overlay = document.getElementById('loadingOverlay');
+      if (overlay) overlay.style.display = 'block';
+
+      if (typeof hidePincodePanel === 'function') hidePincodePanel();
+      else { var p = document.getElementById('pincodePanel'); if (p) p.style.display = 'none'; }
+    };
+  }
+});
+
+(function () {
+
+  // —— Persons 面板 ——
+  function showPersonPanel(cell, currentValue) {
+    window.currentEditingCell = cell;
+    const panel = $('personPanel'), input = $('personCount');
+    if (!panel || !input) return;
+    input.value = currentValue;
+    const r = cell.getBoundingClientRect();
+    panel.style.top  = `${r.top + scrollY - 5}px`;
+    panel.style.left = `${r.right + scrollX - 85}px`;
+    panel.style.display = 'block';
+  }
+  window.showPersonPanel = showPersonPanel;
+
+  function hidePersonPanel() {
+    const panel = $('personPanel');
+    if (panel) panel.style.display = 'none';
+    window.currentEditingCell = null;
+  }
+  window.hidePersonPanel = hidePersonPanel;
+
+  // —— Pincode 面板 ——
+  function hidePincodePanel() {
+    const p = $('pincodePanel');
+    if (p) p.style.display = 'none';
+  }
+  window.hidePincodePanel = hidePincodePanel;
+
+  function showPincodePanel(targetCell) {
+    const panel  = $('pincodePanel'), input = $('newPincodeInput');
+    const saveBtn = $('savePincodeButton'), qrBtn = $('generateQrCodeButton');
+    if (!panel || !input || !saveBtn || !qrBtn) return;
+
+    const tafel = targetCell.parentNode.cells[0].textContent.trim();
+    const r = targetCell.getBoundingClientRect();
+    panel.style.top  = `${r.top  + scrollY}px`;
+    panel.style.left = `${r.right + scrollX}px`;
+    panel.style.display = 'block';
+    input.value = targetCell.textContent.trim();
+
+    // Patch B: 同步 dataset
+    const tr = targetCell.closest('tr');
+    const tafelId = tr ? tr.getAttribute('data-table-id') : '';
+    let dbUrl = '';
+    if (tr && tr.cells && tr.cells.length >= 6) {
+      dbUrl = tr.cells[5].textContent.trim();
+    }
+    panel.dataset.tableId = tafelId || '';
+    panel.dataset.dbUrl   = dbUrl   || '';
+    panel.dataset.pincode = input.value || targetCell.textContent.trim() || '';
+
+    // 输入框变化时，实时更新 dataset.pincode
+    input.addEventListener('input', () => {
+      panel.dataset.pincode = input.value.trim();
+    });
+
+    // 打开面板时，用带上下文的处理器覆盖
+    saveBtn.onclick = () => { updatePincode(tafel, input.value, targetCell); hidePincodePanel(); };
+    // qrBtn.onclick 逻辑将在 Patch C 统一
+  }
+  window.showPincodePanel = showPincodePanel;
+
+  // —— 批量操作的密码提示 ——
+  function showPasswordPrompt(funcName) {
+    window.pendingFunction = funcName;
+    const promptEl = $('passwordPrompt');
+    if (promptEl) promptEl.style.display = 'block';
+  }
+  window.showPasswordPrompt = showPasswordPrompt;
+
+  // —— Pincode 输入联动（>=3 位启用；=4 位自动点击）——
+  function setupPincodeInputHandler() {
+    document.querySelectorAll('.pincodeInput').forEach((input) => {
+      input.addEventListener('input', () => {
+        const btn = input.closest('form,div')?.querySelector('.pincodeConfirm');
+        if (!btn) return;
+        const v = input.value;
+        btn.disabled = v.length < 3;
+        if (v.length === 4) btn.click();
+      });
+    });
+  }
+  window.setupPincodeInputHandler = setupPincodeInputHandler;
+
+  // —— 批量开关按钮绑定（修正提前闭合 & 误用 qrBtn）——
+  function bindBatchActionButtons() {
+    // Open alles → 弹出 centerPanel3，校验后 openAllTablesStatusOpen()
+    const openBtn = $('openAllesBtn');
+    if (openBtn && !openBtn.dataset.bound) {
+      openBtn.addEventListener('click', () => {
+        const panel2Overlay = $('centerPanel2Overlay');
+        const panel2 = $('centerPanel2');
+        if (panel2Overlay) panel2Overlay.style.display = 'none';
+        if (panel2) panel2.style.display = 'none';
+
+        const overlay = $('centerPanel3Overlay');
+        const panel   = $('centerPanel3');
+        if (overlay) overlay.style.display = 'block';
+        if (panel)   panel.style.display   = 'block';
+
+        const pwd = $('beheerWachtwoordInput');
+        if (pwd) { pwd.value = ''; setTimeout(() => pwd.focus(), 100); }
+
+        const confirmBtn = $('confirmBeheerBtn');
+        if (confirmBtn) {
+          confirmBtn.onclick = null;
+          confirmBtn.onclick = (e) => {
+            e.preventDefault();
+            const password = pwd?.value.trim() || '';
+            if (!password) { alert('Beheer wachtwoord不能为空!'); return; }
+            if (overlay) overlay.style.display = 'none';
+            if (panel)   panel.style.display   = 'none';
+            openAllTablesStatusOpen();
+          };
+        }
+      });
+      openBtn.dataset.bound = '1';
+    }
+
+    // Sluit alles → 同样弹出 centerPanel3，校验后 closeAllTablesStatusAfgesloten()
+    const sluitBtn = $('sluitAllesBtn');
+    if (sluitBtn && !sluitBtn.dataset.bound) {
+      sluitBtn.addEventListener('click', () => {
+        // 先隐藏centerPanel2和其overlay
+        const panel2Overlay = $('centerPanel2Overlay');
+        const panel2 = $('centerPanel2');
+        if (panel2Overlay) panel2Overlay.style.display = 'none';
+        if (panel2) panel2.style.display = 'none';
+
+        // 再显示centerPanel3
+        const overlay = $('centerPanel3Overlay');
+        const panel   = $('centerPanel3');
+        if (overlay) overlay.style.display = 'block';
+        if (panel)   panel.style.display   = 'block';
+
+        const pwd = $('beheerWachtwoordInput');
+        if (pwd) { pwd.value = ''; setTimeout(() => pwd.focus(), 100); }
+
+        const confirmBtn = $('confirmBeheerBtn');
+        if (confirmBtn) {
+          confirmBtn.onclick = null;
+          confirmBtn.onclick = (e) => {
+            e.preventDefault();
+            const password = pwd?.value.trim() || '';
+            if (!password) { alert('Beheer wachtwoord不能为空!'); return; }
+            if (overlay) overlay.style.display = 'none';
+            if (panel)   panel.style.display   = 'none';
+            closeAllTablesStatusAfgesloten();
+          };
+        }
+      });
+      sluitBtn.dataset.bound = '1';
+    }
+  }
+
+  // —— 全局函数：批量改状态 ——
+(function () {
+  // 全局函数：批量将所有台号 Status 设为 'afgesloten'
+  async function closeAllTablesStatusAfgesloten() {
+    try {
+      const restName = document.getElementById("restUrlName")?.textContent?.trim();
+      if (!restName) {
+        alert("餐厅名称未找到！");
+        return;
+      }
+      const db = firebase.database();
+      const tafelsRef = db.ref(`${restName}/tafel`);
+      const snapshot = await tafelsRef.once('value');
+      const tafels = snapshot.val();
+      if (!tafels) {
+        alert("未找到任何台号！");
+        return;
+      }
+      const updates = {};
+      Object.keys(tafels).forEach(tafelId => {
+        updates[`${restName}/tafel/${tafelId}/Status`] = "afgesloten";
+      });
+      await db.ref().update(updates);
+      if (typeof showNotification === 'function') showNotification("所有台号已批量关闭", "success", 3000);
+      if (typeof loadData === 'function') loadData();
+    } catch (err) {
+      console.error("批量关闭台号失败：", err);
+      if (typeof showNotification === 'function') showNotification("批量关闭失败", "error", 3000);
+    }
+  }
+  window.closeAllTablesStatusAfgesloten = closeAllTablesStatusAfgesloten;
+
+  // 全局函数：批量将所有台号 Status 设为 'open'
+  async function openAllTablesStatusOpen() {
+    try {
+      const restName = document.getElementById("restUrlName")?.textContent?.trim();
+      if (!restName) {
+        alert("餐厅名称未找到！");
+        return;
+      }
+      const db = firebase.database();
+      const tafelsRef = db.ref(`${restName}/tafel`);
+      const snapshot = await tafelsRef.once('value');
+      const tafels = snapshot.val();
+      if (!tafels) {
+        alert("未找到任何台号！");
+        return;
+      }
+      const updates = {};
+      Object.keys(tafels).forEach(tafelId => {
+        updates[`${restName}/tafel/${tafelId}/Status`] = "open";
+      });
+      await db.ref().update(updates);
+      if (typeof showNotification === 'function') showNotification("所有台号已批量开启", "success", 3000);
+      if (typeof loadData === 'function') loadData();
+    } catch (err) {
+      console.error("批量开启台号失败：", err);
+      if (typeof showNotification === 'function') showNotification("批量开启失败", "error", 3000);
+    }
+  }
+  window.openAllTablesStatusOpen = openAllTablesStatusOpen;
+})();
+
+  // —— 基础绑定（遮罩关闭、输入限制）——
+  function bindBasicUiHandlers() {
+    const overlay = $('overlay');
+    if (overlay && !overlay.dataset.bound) {
+      overlay.addEventListener('click', function () {
+        this.style.display = 'none';
+        $('centerPanel')  && ( $('centerPanel').style.display  = 'none' );
+        $('centerPanel2') && ( $('centerPanel2').style.display = 'none' );
+      });
+      overlay.dataset.bound = '1';
+    }
+    const pinInput = $('pincodeInput');
+    if (pinInput && !pinInput.dataset.bound) {
+      pinInput.addEventListener('input', function () { this.value = this.value.slice(0, 4); });
+      pinInput.dataset.bound = '1';
+    }
+  }
+
+  // —— 页面初始化时绑定一次，表格刷新后可再次调用 —— 
+  document.addEventListener('DOMContentLoaded', () => {
+    bindBatchActionButtons();
+    bindBasicUiHandlers();
+
+    // FAB：打开批量 pincode 面板
+    const fabPincodeBtn = $('fabPincodeBtn');
+    if (fabPincodeBtn && !fabPincodeBtn.dataset.bound) {
+      fabPincodeBtn.addEventListener('click', () => {
+        const overlay = $('centerPanelOverlay');
+        const panel   = $('centerPanel');
+        if (overlay) overlay.style.display = 'block';
+        if (panel)   panel.style.display   = 'block';
+        const pwd = $('passwordInput');
+        if (pwd) setTimeout(() => pwd.focus(), 100);
+      });
+      fabPincodeBtn.dataset.bound = '1';
+    }
+
+    // FAB：打开“全部开/关”面板
+    const fabSluitAllesBtn = $('fabSluitAllesBtn');
+    if (fabSluitAllesBtn && !fabSluitAllesBtn.dataset.bound) {
+      fabSluitAllesBtn.addEventListener('click', () => {
+        const overlay = $('centerPanel2Overlay');
+        const panel   = $('centerPanel2');
+        if (overlay) overlay.style.display = 'block';
+        if (panel)   panel.style.display   = 'block';
+        const pwd = $('passwordInputTafel');
+        if (pwd) setTimeout(() => pwd.focus(), 100);
+      });
+      fabSluitAllesBtn.dataset.bound = '1';
+    }
+  });
+
+  // 暴露函数，供表格刷新后再次绑定
+  window.bindBatchActionButtons = bindBatchActionButtons;
+  window.bindBasicUiHandlers   = bindBasicUiHandlers;
+})();
+</script>

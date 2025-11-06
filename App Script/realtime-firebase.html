@@ -1,0 +1,171 @@
+<!-- Firebase listeners setup -->
+<script>
+///==============================================================
+///监听数据库tafel里面是否有数据变化，如果有变化随时更新
+///==============================================================
+function setupRealtimeListeners() {
+    const RestNameUrlElement = document.getElementById('restUrlName');
+    const RestNameUrl = RestNameUrlElement ? RestNameUrlElement.innerText.trim() : null;
+
+    if (!RestNameUrl) {
+        console.error("The restaurant URL (RestNameUrl) is not defined.");
+        return;
+    }
+
+    // Generate or retrieve a unique device ID
+    let deviceId = localStorage.getItem('deviceId');
+    if (!deviceId) {
+        deviceId = `device_${Math.random().toString(36).substring(2)}`;
+        localStorage.setItem('deviceId', deviceId);
+    }
+
+    // Setup a real-time listener on the `/tafel` path
+    const tafelRef = firebase.database().ref(`/${RestNameUrl}/tafel`);
+    // Maintain a local copy of the previous state for comparison
+   tafelRef.on('child_changed', (snapshot) => {
+    const key = snapshot.key; // Table ID
+    const newData = snapshot.val();
+    const oldData = previousData[key] || {};
+
+    // Update the local copy with the new data
+    previousData[key] = { ...newData };
+
+    // Check if the change originated from this device
+    // if (newData.lastUpdatedBy === deviceId) {
+    //     console.log(`Change to ${key} originated from this device, skipping notification.`);
+    //     return;
+    // }
+
+    // Find the row using data-table-id
+    const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+    const row = tableBody.querySelector(`[data-table-id="${key}"]`);
+
+    if (!row) {
+        console.warn(`Row for table ${key} not found.`);
+        return;
+    }
+
+    // Process only meaningful changes
+    if (newData.Persons !== oldData.Persons) {
+
+          showNotification(`${key} gewijzigd naar ${newData.Persons} personen`, "info");
+          row.querySelector('.persons-cell').textContent = newData.Persons || 0;
+
+     
+    }
+
+    if (newData.Pincode !== oldData.Pincode) {
+        const row = document.querySelector(`[data-table-id="${key}"]`);
+        if (row) {
+            const pincodeCell = row.querySelector('.pincode-cell');
+            if (pincodeCell) {
+                pincodeCell.textContent = newData.Pincode || 'N/A';
+            }
+        }
+        showNotification(`De pincode van ${key} is nu ${newData.Pincode}`, "info");
+    }
+
+
+    if (newData.Status !== oldData.Status) {
+        // Determine the notification type based on the status
+        const notificationType = newData.Status.toLowerCase() === 'afgesloten' ? 'error' : 'success';
+
+        // Display the notification with the appropriate color
+        showNotification(`${key} is nu ${newData.Status}`, notificationType);
+
+        // Update the checkbox based on the status
+        const statusInput = row.querySelector('input[type="checkbox"]');
+        if (statusInput) {
+            statusInput.checked = newData.Status.toLowerCase() === 'open';
+        }
+    }
+
+    // 实时刷新台号高亮和字体
+    if (typeof loadData === 'function') {
+        loadData();
+    } else if (window.loadData) {
+        window.loadData();
+    }
+});
+
+
+
+
+}
+
+
+
+
+function updateRowField(tableId, field, value) {
+    const row = document.querySelector(`[data-table-id="${tableId}"]`);
+    if (!row) {
+        console.warn(`Row for table ${tableId} not found.`);
+        return;
+    }
+
+    const fieldCell = row.querySelector(`.${field.toLowerCase()}-cell`);
+    if (fieldCell) {
+        fieldCell.textContent = value || 'N/A';
+        console.log(`Updated ${field} for ${tableId}: ${value}`);
+    }
+}
+
+//===========================================================
+//更新台号数据的函数
+//===========================================================
+
+function refreshTableUI(Data) {
+        const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = '';
+        const restUrlName = document.getElementById('restUrlName')?.innerText.trim();
+        Data.forEach(([key, rowData]) => {
+                const status = rowData.Status ? rowData.Status.toLowerCase() : 'unknown';
+                const tr = document.createElement('tr');
+                // Table ID
+                const tdTafel = document.createElement('td');
+                tdTafel.style.fontWeight = '600';
+                tdTafel.textContent = key.replace(/^Tafel-/, '');
+                tr.appendChild(tdTafel);
+                // Persons
+                const tdPers = document.createElement('td');
+                tdPers.textContent = rowData.Persons || 0;
+                tr.appendChild(tdPers);
+                // Status
+                const tdStatus = document.createElement('td');
+                tdStatus.innerHTML = `<label class="switch">
+                                <input type="checkbox" ${status === 'open' ? 'checked' : ''} onchange="toggleStatus(event, '${key}')">
+                                <span class="slider round"></span>
+                            </label>`;
+                tr.appendChild(tdStatus);
+                // Pincode
+                const tdPin = document.createElement('td');
+                tdPin.className = 'pincode-cell';
+                tdPin.textContent = rowData.Pincode || rowData.pincode || 'N/A';
+                tr.appendChild(tdPin);
+                // menuType
+                const tdMenu = document.createElement('td');
+                const select = document.createElement('select');
+                select.className = 'menuTypeSelect';
+                select.innerHTML = `<option value="lunch">lunch</option><option value="dinner">dinner</option>`;
+                select.value = rowData.menuType || 'lunch';
+                select.onchange = function() {
+                    firebase.database().ref(`/${restUrlName}/tafel/${key}/menuType`).set(this.value)
+                        .then(()=>{
+                            if(typeof showNotification==='function') showNotification(`Menu voor ${key} gewijzigd naar ${this.value}`,'success');
+                        })
+                        .catch(()=>{
+                            if(typeof showNotification==='function') showNotification('Fout bij het wijzigen van menuType','error');
+                        });
+                };
+                tdMenu.appendChild(select);
+                tr.appendChild(tdMenu);
+                // Hidden URL
+                const tdUrl = document.createElement('td');
+                tdUrl.style.display = 'none';
+                tdUrl.textContent = rowData.URL || 'No URL';
+                tr.appendChild(tdUrl);
+                tableBody.appendChild(tr);
+        });
+}
+
+</script>

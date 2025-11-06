@@ -1,0 +1,517 @@
+<script>
+  let currentEditingCell = null;  // Declare this at the top of your script, outside any function
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();  // Load data from Google Apps Script
+    setupEventHandlers();  // Setup all event handlers
+    setupConfirmButton();
+    setupConfirmButtonPass();
+
+    const qrCodeContainer = document.getElementById('qrCodeContainer');
+    const actionDiv = document.getElementById('actionDiv');
+    const openSluitAllesButton = document.getElementById('openSluitAlles');
+
+    if (qrCodeContainer) {
+        qrCodeContainer.addEventListener('click', function() {
+            qrCodeContainer.style.display = 'none';  // Hide the container when clicked
+        });
+    }
+
+    if (openSluitAllesButton) {
+        openSluitAllesButton.addEventListener('click', function(event) {
+            actionDiv.style.display = 'block';  // Show the actionDiv when button is clicked
+            event.stopPropagation(); // Prevent the event from bubbling up to the document
+        });
+    }
+
+    if (actionDiv) {
+        document.addEventListener('click', function(event) {
+            if (!actionDiv.contains(event.target) && !openSluitAllesButton.contains(event.target)) {
+                actionDiv.style.display = 'none';  // Hide the container when clicked outside of it
+            }
+        });
+
+        actionDiv.addEventListener('click', function(event) {
+            event.stopPropagation(); // Prevent the event from bubbling up to the document
+        });
+    }
+});
+
+    document.getElementById('refreshButton').addEventListener('click', function() {
+  // Show the loading overlay
+  document.getElementById('loadingOverlay').style.display = 'flex';
+
+  // Call loadData and wait for it to finish
+  loadData();
+});
+function loadData() {
+    google.script.run.withSuccessHandler(function(data) {
+        const tableBody = document.getElementById('dataTable').getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = '';
+        data.forEach(function(row) {
+            const status = row.Status ? row.Status.toLowerCase() : 'unknown';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: 600;">${row.Tafel}</td>
+                <td>${row.Persons}</td>
+                <td>
+                    <label class="switch">
+                        <input type="checkbox" ${status === 'open' ? 'checked' : ''} onchange="toggleStatus(event, '${row.Tafel}')">
+                        <span class="slider round"></span>
+                    </label>
+                </td>
+                <td class='pincode-cell'>${row.Pincode}</td>
+                <td  style="display:none;">${row.URL || 'No URL'}</td>`;  // Include hidden URL for QR code generation
+            tableBody.appendChild(tr);
+        });
+      
+
+    document.getElementById('loadingOverlay').style.display = 'none';
+
+    }).getSheetData();  // This should correspond to a server-side Apps Script function
+}
+
+function setupEventHandlers() {
+      const personPanel = document.getElementById('personPanel');
+      const decreaseButton = document.getElementById('decreaseButton');
+      const increaseButton = document.getElementById('increaseButton');
+      const confirmButton = document.getElementById('confirmButton');
+      const personCountInput = document.getElementById('personCount');
+      const searchInput = document.getElementById('searchInput');
+      searchInput.addEventListener('keyup', handleSearch);
+
+    const dataTable = document.getElementById('dataTable');
+        confirmButton.addEventListener('click', () => {
+        handleConfirmButtonClick();
+    });
+
+    decreaseButton.addEventListener('click', () => {
+        let count = Math.max(1, parseInt(personCountInput.value) - 1);
+        personCountInput.value = count;
+    });
+
+    increaseButton.addEventListener('click', () => {
+        let count = parseInt(personCountInput.value) + 1;
+        personCountInput.value = count;
+    });
+    
+    dataTable.addEventListener('click', function(event) {
+        if (event.target.nodeName === "TD") {
+            if (event.target.classList.contains('pincode-cell')) {
+                showPincodePanel(event.target);
+            } else if (event.target.cellIndex === 1) {  // Assuming 'Persons' column
+                showPersonPanel(event.target, event.target.textContent.trim());
+            }
+        }
+    });
+
+// Click outside to hide panels, but allow them to open when appropriate
+window.addEventListener('click', function(e) {
+    const personPanel = document.getElementById('personPanel');
+    const pincodePanel = document.getElementById('pincodePanel');
+    const dataTable = document.getElementById('dataTable');
+
+    // Check if the clicked element is a cell that should show the person panel
+    let isPersonCell = e.target.cellIndex === 1 && e.target.nodeName === "TD";
+
+    // Define conditions for when to hide panels
+    const isClickOutsidePersonPanel = !personPanel.contains(e.target) && !isPersonCell;
+    const isClickOutsidePincodePanel = !pincodePanel.contains(e.target) && !e.target.classList.contains('pincode-cell');
+
+    // Hide person panel if click is outside and not on a person cell
+    if (isClickOutsidePersonPanel) {
+        hidePersonPanel();
+    }
+
+    // Hide pincode panel if click is outside and not on a pincode cell
+    if (isClickOutsidePincodePanel) {
+        hidePincodePanel();
+    }
+
+    // If the click is on a person cell, show the person panel
+    if (isPersonCell) {
+        showPersonPanel(e.target, e.target.textContent.trim());
+    }
+});
+}
+
+function handleSearch() {
+    const searchQuery = this.value.toLowerCase();
+    const tableRows = document.getElementById('dataTable').getElementsByTagName('tbody')[0].rows;
+    Array.from(tableRows).forEach(row => {
+        const cells = Array.from(row.cells);
+        const matchesQuery = cells.some(cell => cell.textContent.toLowerCase().includes(searchQuery));
+        row.style.display = matchesQuery ? '' : 'none';
+    });
+}
+
+function setupConfirmButton() {
+    const confirmButton = document.getElementById('confirmButton');
+    if (confirmButton) {
+        confirmButton.addEventListener('click', handleConfirmButtonClick);
+    } else {
+        console.error("Confirm button not found");
+    }
+}
+
+
+function handleConfirmButtonClick() {
+    const personCountInput = document.getElementById('personCount');
+    if (currentEditingCell && personCountInput) {
+        const newCount = personCountInput.value;
+        currentEditingCell.textContent = newCount; // Update the display immediately
+
+
+        // Assuming currentEditingCell points to a <td> in a row and the first <td> contains the table ID
+        const tableId = currentEditingCell.parentNode.cells[0].textContent; // Access the first cell's content directly
+        const messageOverlay = document.getElementById('messageOverlay');
+        const message = document.getElementById('message')
+
+        // Call the Google Apps Script function
+        google.script.run.withSuccessHandler(function() {
+//                   message.innerHTML = `Het aantal gasten voor <font color='goldenrod'><b>${tableId}</b></font> is gewijzigd naar <font color="goldenrod"><br><b>${newCount}</b></font> personen`;
+//         messageOverlay.style.display = 'block';
+// setTimeout(() => { // Ensure the message is displayed for at least 2 seconds
+//         messageOverlay.style.display = 'none';
+//         }, 1500);
+        
+        }).withFailureHandler(function(error) {
+        console.error('Update failed:', error);
+        }).updateTableStatus(tableId, undefined, newCount);
+        // Hide the panel after updating
+        hidePersonPanel();
+    } else {
+  return;
+        
+    }
+}
+
+
+
+
+// Ensure the setup for showing the person panel is correct
+function showPersonPanel(cell, currentValue) {
+    currentEditingCell = cell; // Track the currently editing cell
+  const personPanel = document.getElementById('personPanel');
+
+  const confirmButton = document.getElementById('confirmButton');
+  const personCountInput = document.getElementById('personCount');
+
+    if (!personPanel) {
+        console.error('Person panel not found');
+        return;
+    }
+
+    personCountInput.value = currentValue;
+    const rect = cell.getBoundingClientRect();
+    personPanel.style.top = `${rect.top + window.scrollY}px`;
+    personPanel.style.left = `${rect.right + window.scrollX}px`;
+    personPanel.style.display = 'block';
+}
+
+function hidePersonPanel() {
+    const personPanel = document.getElementById('personPanel');
+    if (personPanel && personPanel.style.display === 'block') {
+        personPanel.style.display = 'none';
+        currentEditingCell = null; // Clear the reference to the current editing cell
+    }
+}
+
+
+function hidePersonPanel() {
+    const personPanel = document.getElementById('personPanel');
+    if (personPanel) {
+        personPanel.style.display = 'none';
+        currentEditingCell = null;
+    }
+}
+
+function hidePincodePanel() {
+    const pincodePanel = document.getElementById('pincodePanel');
+    if (pincodePanel) {
+        pincodePanel.style.display = 'none';
+        setTimeout(function() {
+    document.querySelector('#loadingOverlay').style.display = 'none';
+}, 2000);  // 3000 milliseconds = 3 seconds
+
+    }
+}
+
+
+function hidePincodePanelWithoutMakeQR() {
+    const pincodePanel = document.getElementById('pincodePanel');
+    if (pincodePanel) {
+        pincodePanel.style.display = 'none';
+        
+        document.querySelector('#loadingOverlay').style.display = 'block';
+    }
+}
+
+function showPincodePanel(targetCell) {
+    const panel = document.getElementById('pincodePanel');
+    const input = panel.querySelector('input[type="number"]');
+    const saveButton = document.getElementById('savePincodeButton');
+    const qrCodeButton = document.getElementById('generateQrCodeButton');
+    const rowIndex = targetCell.parentNode.rowIndex;
+    // const rowInSheet = rowIndex + 2;
+    const tafel = targetCell.parentNode.cells[0].textContent.trim();
+    panel.style.top = `${targetCell.getBoundingClientRect().top + window.scrollY}px`;
+    panel.style.left = `${targetCell.getBoundingClientRect().right + window.scrollX}px`;
+    panel.style.display = 'block';
+    input.value = targetCell.textContent.trim(); // Prefill the current pincode
+
+    saveButton.onclick = () => {
+        updatePincode(rowIndex, input.value, targetCell);
+        
+        hidePincodePanel();
+    };
+    qrCodeButton.onclick = () => {
+      const codeUrl  = targetCell.parentNode.cells[4].textContent.trim() + input.value;
+      
+        generateQRCode(codeUrl, tafel);
+        document.querySelector('#loadingOverlay').style.display = 'block';
+        hidePincodePanelWithoutMakeQR();
+    };
+}
+
+// function generateQRCode(url, tafel) {
+ 
+//     if (!url) {
+//         console.error("No URL provided for QR code generation.");
+//         return;
+//     }
+    
+//     google.script.run.withSuccessHandler(function(qrCodeImageUrl) {
+//           const qrCodeContainer = document.getElementById('qrCodeContainer');
+          
+//           // Ensure the HTML is correctly formatted
+//           qrCodeContainer.innerHTML = `<p>${tafel}</p><div id='imgHolder'><img src="${qrCodeImageUrl}" alt="QR Code"></div>`;
+//           qrCodeContainer.style.display = 'block';
+//           document.querySelector('#loadingOverlay').style.display = 'none';
+//           qrCodeContainer.onclick = function() {
+//           qrCodeContainer.style.display = 'none'; // Hide the container when it is clicked
+          
+//           };
+//     }).generateQRCode(url);
+// }
+
+
+function updatePincode(rowIndex, newPincode, targetCell) {
+    // First, check the validity of the new pincode
+    if (newPincode.length >= 3 && newPincode.length <= 4) {
+        // Optimistically update the UI before the server response
+        targetCell.textContent = newPincode; // Update the display immediately
+
+        // Send the update to the server
+        google.script.run.withSuccessHandler(function() {
+            console.log("Pincode updated successfully on the server.");
+            // Further actions can be taken here if the server confirms the update
+        }).withFailureHandler(function(error) {
+            console.error('Failed to update pincode:', error);
+            // Revert the UI changes if necessary or show an error message
+            targetCell.textContent = "Update failed"; // Consider reverting to original or handling differently
+            alert("Failed to update pincode. Please try again.");
+        }).updatePincode(rowIndex + 2, newPincode); // Adjust rowIndex as needed and call the server-side function
+    } else {
+        alert("The pincode must be 3 or 4 digits.");
+    }
+}
+
+
+function toggleStatus(event, tableId) {
+    // Determine the status based on the checkbox
+    const status = event.target.checked ? 'open' : 'afgesloten';
+
+    // Navigate up to the parent row of the checkbox
+    const row = event.target.closest('tr');
+    if (!row) {
+        console.error('Error: Could not find the row associated with this checkbox.');
+        return;
+    }
+
+    // Assuming the pincode is in the fourth cell (index 3)
+    const pincodeCell = row.cells[3];
+    if (!pincodeCell) {
+        console.error('Error: Could not find the pincode cell.');
+        return;
+    }
+
+    // Retrieve the pincode value
+    const pincode = pincodeCell.textContent;
+
+    // Now pass the status, tableId, and pincode to the Google Apps Script function
+    google.script.run.withSuccessHandler(function() {
+        console.log('Status updated successfully.');
+    }).withFailureHandler(function(error) {
+        console.error('Error updating status:', error);
+    }).updateTableStatus(tableId, status, '', pincode);
+}
+
+
+
+
+/////////////wijzig pincode voor alle tafels/////////////
+document.getElementById('openPanelButton').addEventListener('click', function() {
+  document.getElementById('overlay').style.display = 'block';
+  document.getElementById('centerPanel').style.display = 'block';
+});
+
+document.getElementById('overlay').addEventListener('click', function() {
+  this.style.display = 'none';
+  document.getElementById('centerPanel').style.display = 'none';
+});
+
+// Assuming the correct password is "admin" for demonstration purposes
+document.getElementById('passwordInput').addEventListener('input', function() {
+  const confirmButtonPass = document.getElementById('confirmButtonPass');
+  if (this.value === 'admin') { // Replace 'admin' with the correct password
+    confirmButtonPass.style.display = 'inline-block';
+  } else {
+    confirmButtonPass.style.display = 'inline-block';
+  }
+});
+
+
+
+// Restrict pincodeInput to 4 digits
+document.getElementById('pincodeInput').addEventListener('input', function() {
+  this.value = this.value.slice(0, 4);
+});
+
+function updatePincodeElements(pincode) {
+  // Example: Update all elements with a certain class to the new pincode
+  const pincodeElements = document.querySelectorAll('.pincode-cell');
+  pincodeElements.forEach(element => {
+    element.textContent = pincode;
+  });
+}
+
+function setupConfirmButtonPass() {
+const confirmButtonPass = document.getElementById('confirmButtonPass');
+
+  if (confirmButtonPass) {
+    confirmButtonPass.addEventListener('click', function() {
+      const inputPassword = document.getElementById('passwordInput').value;
+      const pincode = document.getElementById('pincodeInput').value;
+
+      if (pincode.length === 4 || pincode.length === 3) {
+        document.getElementById('loadingOverlay').style.display = 'block';
+        google.script.run.withSuccessHandler(function(isPasswordCorrect) {
+          if (isPasswordCorrect) {
+            // If password is correct
+            google.script.run.withSuccessHandler(function() {
+              // Display message that the new pin code has been set
+              document.getElementById('centerPanel').style.display = 'none';
+                var passwordMessageElementPin = document.getElementById('passwordMessage');
+                passwordMessageElementPin.style.display = 'block'; // Show the message
+                passwordMessageElementPin.innerText = 'Nieuwe pincode is gemaakt voor alle tafels';
+                document.getElementById('loadingOverlay').style.display = 'none';
+                passwordMessageElementPin.style.color = 'green';
+                setTimeout(function() {
+                passwordMessageElementPin.style.display = 'none';
+                document.getElementById('overlay').style.display = 'none';
+                }, 3000);
+              updatePincodeElements(pincode);
+              document.getElementById('passwordInput').value = ''; // Reset the password field
+              document.getElementById('pincodeInput').value = '';
+              // loadData(); // Assuming loadData() fetches updated data and refreshes the table
+              }).setPincodeFromApp(pincode);
+              } else {
+              // If password is incorrect
+              var passwordMessageElementPin = document.getElementById('passwordMessage');
+              passwordMessageElementPin.style.display = 'block'; // Show the message
+              passwordMessageElementPin.innerText = 'Verkeerd wachtwoord';
+              passwordMessageElementPin.style.color = 'red';
+              setTimeout(function() {
+              passwordMessageElementPin.style.display = 'none';
+              document.getElementById('overlay').style.display = 'none';
+              }, 3000);
+          }
+        }).checkPassword(inputPassword);
+      } else {
+        alert("De pincode moet uit 3 of 4 cijfers bestaan."); // "The pincode must consist of 4 digits."
+      }
+    });
+  }
+}
+
+
+
+        document.getElementById('openSluitAlles').addEventListener('click', function() {
+        const button = document.getElementById('openSluitAlles');
+        const actionDiv = document.getElementById('actionDiv');
+        const tableWrapper = document.getElementById('tableWrapper');
+        if (tableWrapper.style.marginTop === '150px') {
+        tableWrapper.style.marginTop = '70px'; // Adjust this value based on your design
+        } else {
+        tableWrapper.style.marginTop = '150px';
+        }
+        // Calculate the position of the button
+        const rect = button.getBoundingClientRect();
+        actionDiv.style.position = 'absolute';
+        actionDiv.style.top = `${rect.bottom + window.scrollY}px`;
+        actionDiv.style.left = `${rect.left + window.scrollX}px`;
+        
+        actionDiv.style.display = 'block';
+        });
+        document.getElementById('sluitAllesBtn').addEventListener('click', function() {
+            showPasswordPrompt('autoSluitenAll');
+        });
+
+        document.getElementById('openAllesBtn').addEventListener('click', function() {
+            showPasswordPrompt('autoOpenAll');
+        });
+
+        document.getElementById('confirmPasswordBtn').addEventListener('click', function() {
+            const password = document.getElementById('passwordInputTafel').value;
+            checkPassword(password, function(isValid) {
+                if (isValid) {
+                    runServerFunction(pendingFunction);
+                } else {
+                    alert('Invalid password');
+                }
+            });
+        });
+
+        let pendingFunction = null;
+        
+        function showPasswordPrompt(funcName) {
+        pendingFunction = funcName;
+        document.getElementById('passwordPrompt').style.display = 'block';
+        }
+        
+        function checkPassword(password, callback) {
+        // Simulate a server-side password check
+        google.script.run.withSuccessHandler(callback).checkPassword(password);
+        }
+        
+        const functionMessages = {
+        autoSluitenAll: 'Alle tafels zijn gesloten.',
+        autoOpenAll: 'Alle tafels zijn geopend.',
+        // Add more mappings if needed
+        };
+        
+        function runServerFunction(funcName) {
+        document.getElementById('loadingOverlay').style.display = 'block';
+        google.script.run.withSuccessHandler(function() {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        document.getElementById('actionDiv').style.display = 'none';
+        document.getElementById('passwordInputTafel').value = ''; // Reset the password field
+        document.getElementById('passwordPrompt').style.display = 'none'; // Hide the password prompt
+        loadData();
+        var passwordMessageElement = document.getElementById('passwordMessage');
+        passwordMessageElement.style.display = 'block'; // Show the message
+        passwordMessageElement.innerText = functionMessages[funcName] || 'Actie succesvol uitgevoerd.';
+                // Set the message color based on the function name
+        if (funcName === 'autoSluitenAll') {
+            passwordMessageElement.style.color = 'red';
+        } else {
+            passwordMessageElement.style.color = 'green';
+        }
+        setTimeout(function() {
+        passwordMessageElement.style.display = 'none';
+        }, 2000);
+        })[funcName]();
+        }
+////////////////////////////einde scripts  voor wijziging pincode voor alle tafels ////////////
+</script>

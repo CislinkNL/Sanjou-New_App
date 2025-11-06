@@ -1,0 +1,113 @@
+<!-- Notifications setup -->
+<script>
+// ================================================================================================\\
+// Beheer wachtwoord - met google script run function - password validation
+// ================================================================================================\\
+
+function setupConfirmButtonPass() {
+  // Select individual elements
+  const confirmButtonPass = document.getElementById('confirmButtonPass');
+  const pincodeInput = document.getElementById('pincodeInput');
+  const passwordInput = document.getElementById('passwordInput');
+
+  if (!confirmButtonPass || !pincodeInput || !passwordInput) {
+    console.error("Required elements (confirmButtonPass, pincodeInput, passwordInput) are missing.");
+    return;
+  }
+
+  // Disable the confirm button initially
+  confirmButtonPass.disabled = true;
+  confirmButtonPass.classList.add('disabled'); // Add disabled styling
+
+  // Pincode input handler for enabling/disabling the confirm button and triggering auto-click
+  pincodeInput.addEventListener('input', function () {
+    const pincode = pincodeInput.value;
+
+    // Enable/disable button based on pincode length
+    if (pincode.length >= 3) {
+      confirmButtonPass.disabled = false;
+      confirmButtonPass.classList.remove('disabled'); // Remove disabled styling
+    } else {
+      confirmButtonPass.disabled = true;
+      confirmButtonPass.classList.add('disabled'); // Add disabled styling
+    }
+
+    // Automatically trigger button click when input reaches 4 digits
+    if (pincode.length === 4) {
+      confirmButtonPass.click();
+    }
+  });
+
+  // Confirm button click handler
+  confirmButtonPass.addEventListener('click', function () {
+    const inputPassword = passwordInput.value;
+    const pincode = pincodeInput.value;
+
+    // Validate the pincode length
+    if (pincode.length >= 3 && pincode.length <= 4) {
+      // Show the loading overlay while processing
+      document.getElementById('loadingOverlay').style.display = 'flex';
+
+      // Validate the password via Google Apps Script
+      google.script.run.withSuccessHandler(function (isPasswordCorrect) {
+        if (isPasswordCorrect) {
+          // If password is correct, update pincodes
+          document.getElementById('centerPanel').style.display = 'none';
+          updatePincodeElements(pincode);
+
+          // Show success notification
+          showNotification(`De pincodes van al de tafels zijn gewijzigd!`, "success");
+
+          // Hide overlay and reset fields after a delay
+          setTimeout(function () {
+            document.getElementById('overlay').style.display = 'none';
+          }, 3000);
+
+          // Clear input fields
+          passwordInput.value = '';
+          pincodeInput.value = '';
+        } else {
+          // Show error notification for incorrect password
+          showNotification(`Verkeerd wachtwoord`, "error");
+
+          // Hide overlay after a delay
+          setTimeout(function () {
+            document.getElementById('overlay').style.display = 'none';
+          }, 3000);
+        }
+      }).checkPassword(inputPassword); // Check password via Google Apps Script
+    } else {
+      // Show error notification for invalid pincode
+      showNotification(`De pincode moet 3 of 4 cijfers zijn.`, "error");
+    }
+  });
+}
+
+
+// ================================================================================================\\
+// Show notification depending on the message type.
+// ================================================================================================\\
+
+function showNotification(message, type = "info") {
+  // Create or select the notification container
+  let notificationContainer = document.getElementById("notificationContainer");
+  if (!notificationContainer) {
+    notificationContainer = document.createElement("div");
+    notificationContainer.id = "notificationContainer";
+    document.body.appendChild(notificationContainer);
+  }
+
+  // Create a new notification message
+  const notification = document.createElement("div");
+  notification.className = `notification ${type}`;
+  notification.textContent = message;
+
+  // Append the notification to the container
+  notificationContainer.appendChild(notification);
+
+  // Automatically remove the notification after a timeout
+  setTimeout(() => {
+    notification.remove();
+  }, 3000); // Adjust the timeout as needed
+}
+</script>

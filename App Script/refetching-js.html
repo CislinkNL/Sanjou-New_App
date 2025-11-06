@@ -1,0 +1,100 @@
+<script>
+
+
+let lastSyncTime = 0; // Tracks the last sync time
+const SYNC_COOLDOWN = 5000; // Cooldown in milliseconds
+
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+        const now = Date.now();
+        if (now - lastSyncTime > SYNC_COOLDOWN) {
+            console.log("Tab is active. Fetching updates...");
+            lastSyncTime = now; // Update last sync time
+            firebase.database().ref(`/${RestNameUrl}/tafel`).once('value').then((snapshot) => {
+                const data = snapshot.val();
+                console.log("Updated data:", data);
+                reconcileChanges(data); // Ensure to process and update UI
+            });
+        } else {
+            console.log("Sync skipped due to cooldown.");
+        }
+    }
+});
+
+function startPeriodicSync(interval = 10000) {
+    setInterval(async () => {
+        console.log("Performing periodic sync...");
+        lastSyncTime = Date.now(); // Update last sync time
+        try {
+            const snapshot = await firebase.database().ref(`/${RestNameUrl}/tafel`).once('value');
+            const data = snapshot.val();
+            console.log("Updated data (periodic sync):", data);
+            reconcileChanges(data); // Update UI
+        } catch (error) {
+            console.error("Error during periodic sync:", error);
+        }
+    }, interval);
+}
+
+
+
+function reconcileChanges(latestData) {
+    if (!latestData || typeof latestData !== 'object') return;
+    Object.entries(latestData).forEach(([key, newData]) => {
+        if (!key || !newData) return;
+        const oldData = previousData && previousData[key] ? previousData[key] : {};
+
+        // Update local copy
+        if (typeof previousData === 'object') previousData[key] = { ...newData };
+
+        // Update UI for changed fields
+        const row = document.querySelector(`[data-table-id="${key}"]`);
+        if (!row) {
+            console.warn(`Row for table ${key} not found during reconciliation.`);
+            return;
+        }
+
+        // Check and update Persons
+        if (newData.Persons !== oldData.Persons) {
+            const personsCell = row.querySelector('.persons-cell');
+            if (personsCell) {
+                personsCell.textContent = newData.Persons || 0;
+            }
+            showNotification(`Tafel ${key}: Aantal personen gewijzigd naar ${newData.Persons}`, "info");
+        }
+
+        // Check and update Pincode
+        if (newData.Pincode !== oldData.Pincode) {
+            const pincodeCell = row.querySelector('.pincode-cell');
+            if (pincodeCell) {
+                pincodeCell.textContent = newData.Pincode || 'N/A';
+            }
+            showNotification(`De pincode van ${key} is nu ${newData.Pincode}`, "info");
+        }
+
+        // Check and update Status
+        if (newData.Status !== oldData.Status) {
+            const statusInput = row.querySelector('input[type="checkbox"]');
+            if (statusInput) {
+                statusInput.checked = newData.Status && newData.Status.toLowerCase() === 'open';
+            }
+            showNotification(`Tafel ${key} is nu ${newData.Status}`, newData.Status && newData.Status.toLowerCase() === 'afgesloten' ? "error" : "success");
+        }
+    });
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</script>

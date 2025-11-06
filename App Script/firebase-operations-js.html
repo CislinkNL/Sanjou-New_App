@@ -1,0 +1,252 @@
+<!--Firebase in actions  -->
+<script>
+// =================== 实时监听桌数据变化，主页面自动刷新 ===================
+document.addEventListener('DOMContentLoaded', function () {
+  // 动态获取 RestNameUrl
+  var restName = (typeof window.RestNameUrl !== 'undefined' && window.RestNameUrl) ? window.RestNameUrl : '';
+  if (!restName) {
+    var restNameElem = document.getElementById('restUrlName');
+    if (restNameElem) restName = restNameElem.innerText ? restNameElem.innerText.trim() : '';
+    if (restName) window.RestNameUrl = restName;
+  }
+  if (restName && typeof firebase !== 'undefined') {
+    firebase.database().ref(`/${restName}/tafel`).on('value', function(snapshot) {
+      if (typeof loadData === 'function') loadData();
+    });
+  }
+});
+// ================================================================================================\\
+// Firebase - update pincode
+// ================================================================================================\\
+async function updatePincode(tableId, newPincode, targetCell) {
+  try {
+    // Validate pincode length
+    if (newPincode.length < 3 || newPincode.length > 4) {
+      showNotification("De pincode moet uit 3 of 4 cijfers bestaan.", "error");
+      return;
+    }
+
+    // Fetch the `RestNameUrl` dynamically
+    const RestNameUrlElement = document.getElementById('restUrlName');
+    if (!RestNameUrlElement) {
+      throw new Error("The element with ID 'restUrlName' was not found.");
+    }
+    const RestNameUrl = RestNameUrlElement.innerText.trim();
+
+    if (!RestNameUrl) {
+      throw new Error("The restaurant name URL (RestNameUrl) is empty or undefined.");
+    }
+
+    // Update the UI optimistically
+    targetCell.textContent = newPincode;
+
+
+
+    // Prepare update object, filter out undefined values
+    const updateObj = {
+      Pincode: newPincode
+    };
+    if (typeof deviceId !== 'undefined' && deviceId !== null) {
+      updateObj.lastUpdatedBy = deviceId;
+    }
+    await firebase.database().ref(`${RestNameUrl}/tafel/${tableId}`).update(updateObj);
+ 
+  } catch (error) {
+    // Log and display errors using the notification system
+    console.error("Error updating pincode:", error);
+    showNotification(`Failed to update pincode: ${error.message}`, "error");
+  } finally {
+    // Hide the loading overlay or spinner (optional)
+ console.log(`${tableId}is met nieuwe pincode: ${newPincode}`);
+
+  }
+}
+// ================================================================================================\\
+// Firebase -- Toggle the table status
+// ================================================================================================\\
+
+function toggleStatus(event, tableId) {
+  if (!event || !event.target) return;
+  var status = event.target.checked ? 'open' : 'afgesloten';
+  var tr = event.target.closest('tr');
+  var pincode = '';
+  if (tr) {
+    var pinCell = tr.querySelector('.pincode-cell');
+    if (pinCell) pincode = pinCell.textContent;
+  }
+  // 动态获取 RestNameUrl，优先用 window.RestNameUrl，否则从 DOM 获取
+  var restName = (typeof window.RestNameUrl !== 'undefined' && window.RestNameUrl) ? window.RestNameUrl : '';
+  if (!restName) {
+    var restNameElem = document.getElementById('restUrlName');
+    if (restNameElem) restName = restNameElem.innerText ? restNameElem.innerText.trim() : '';
+    if (restName) window.RestNameUrl = restName;
+  }
+  if (!tableId || !restName) {
+    showNotification('Tafel-ID of RestNameUrl ontbreekt', 'error');
+    return;
+  }
+  var ref = firebase.database().ref('/' + restName + '/tafel/' + tableId);
+  ref.update({
+    Status: status
+  }).then(function() {
+    console.log(tableId + ' is nu ' + status);
+    if (status === 'afgesloten') {
+      if (typeof clearOrderList === 'function') clearOrderList(tableId);
+      if (typeof callResetEndpoint === 'function') callResetEndpoint(tableId);
+    }
+  }).catch(function(error) {
+    var errorMessage = 'Er was een probleem met Tafel ' + tableId + ': ' + error.message;
+    showNotification(errorMessage, 'error');
+  });
+}
+
+// Function to delete the order list and reset orderNumbers
+function clearOrderList(tableId) {
+    // Delete the order list
+    firebase.database().ref(`/${RestNameUrl}/tafel/${tableId}/orders`).remove()
+    .then(() => {
+        console.log(`Orderlijst van Tafel ${tableId} is verwijderd.`);
+
+        // Reset orderNumbers to 1
+        return firebase.database().ref(`/${RestNameUrl}/tafel/${tableId}/orders`).update({
+            orderNumbers: 1
+        });
+    })
+    .then(() => {
+        console.log(`Ordernummer van Tafel ${tableId} is gereset naar 1.`);
+    })
+    .catch(error => {
+        // Notify the user if there's an error
+        const errorMessage = `Er was een probleem bij het verwijderen van de orderlijst van Tafel ${tableId}: ${error.message}`;
+        showNotification(errorMessage, "error");
+    });
+}
+
+
+function callResetEndpoint(tafelId) {
+  const baseUrl = "https://script.google.com/macros/s/AKfycbwgA4ue477R9BX2dy3SPk5UwePyjMVjnoU1kLm7B9rgHIBTcgwDKoElgwnXWSBT8OPLOA/exec";
+  
+  // Build the full URL with query parameters
+  const url = `${baseUrl}?page=reset&tafelId=${encodeURIComponent(tafelId)}`;
+  // Use Fetch API to make the request
+  fetch(url)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.text();
+    })
+    .then(responseText => {
+      console.log(`Response from server: ${responseText}`);
+      showNotification(`${responseText}`,"success",2000);
+    })
+    .catch(error => {
+      console.log(`Error occurred: ${error.message}`);
+    });
+}
+
+
+//=========================================
+//wijzig aantal personen
+//=========================================
+function handleConfirmButtonClick() {
+  const personCountInput = document.getElementById('personCount');
+  if (currentEditingCell && personCountInput) {
+    const newCount = personCountInput.value;
+    currentEditingCell.textContent = newCount; // Update the display immediately
+
+    // Assuming currentEditingCell points to a <td> in a row and the first <td> contains the table ID
+    const tableId = currentEditingCell.parentNode.cells[0].textContent.trim(); // Access the first cell's content directly
+
+    // Prepare update object, filter out undefined values
+    const updateObj = {
+      Persons: newCount
+    };
+    if (typeof deviceId !== 'undefined' && deviceId !== null) {
+      updateObj.lastUpdatedBy = deviceId;
+    }
+    firebase.database().ref(`/${RestNameUrl}/tafel/${tableId}`).update(updateObj)
+      .then(() => {
+        console.log(`Het aantal personen van ${tableId} was gewijzigd naar ${newCount}`,"success");
+      })
+      .catch(error => {
+        console.error("Failed to update aantal:", error);
+        alert("Failed to update aantal. Please try again.");
+      });
+
+    // Hide the panel after updating
+    hidePersonPanel();
+  } else {
+    return;
+  }
+}
+// ================================================================================================\\
+// Firebase - update all tables's pincode, should remove the device id's first
+// ================================================================================================\\
+
+async function updatePincodeElements(pincode) {
+    try {
+        // Validate the pincode
+        if (pincode.length < 3 || pincode.length > 4) {
+            showNotification("De pincode moet uit 3 of 4 cijfers bestaan.", "error");
+            return;
+        }
+
+        // Fetch the `RestNameUrl` dynamically
+        const RestNameUrlElement = document.getElementById('restUrlName');
+        if (!RestNameUrlElement) {
+            throw new Error("The element with ID 'restUrlName' was not found.");
+        }
+        const RestNameUrl = RestNameUrlElement.innerText.trim();
+
+        if (!RestNameUrl) {
+            throw new Error("The restaurant name URL (RestNameUrl) is empty or undefined.");
+        }
+
+        // Optimistically update the UI for all visible pincode cells
+        const pincodeElements = document.querySelectorAll('.pincode-cell');
+        pincodeElements.forEach(element => {
+            element.textContent = pincode; // Update the UI immediately
+        });
+
+        // Step 1: Remove `deviceId` for all tables
+        const snapshot = await firebase.database().ref(`/${RestNameUrl}/tafel`).once('value');
+        const data = snapshot.val();
+
+        if (!data) {
+            throw new Error(`No data found for '/${RestNameUrl}/tafel'.`);
+        }
+
+        const removeDeviceIdUpdates = {};
+        Object.keys(data).forEach((tableId) => {
+            removeDeviceIdUpdates[`${RestNameUrl}/tafel/${tableId}/lastUpdatedBy`] = null;
+        });
+
+        await firebase.database().ref().update(removeDeviceIdUpdates);
+        console.log("Device IDs removed for all tables.");
+
+        // Step 2: Batch update pincodes and reset `deviceId`
+        const updates = {};
+        Object.keys(data).forEach((tableId) => {
+            updates[`${RestNameUrl}/tafel/${tableId}/Pincode`] = pincode;
+            updates[`${RestNameUrl}/tafel/${tableId}/lastUpdatedBy`] = deviceId; // Reset deviceId
+        });
+
+        await firebase.database().ref().update(updates);
+        console.log("Pincode batch update completed successfully.");
+        
+    } catch (error) {
+        // Log and display errors
+        console.error("Error updating all pincodes:", error);
+        alert(`Failed to update pincodes: ${error.message}`);
+    } finally {
+        // Hide the loading overlay (optional)
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+    }
+}
+
+
+</script>

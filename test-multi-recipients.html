@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>测试多接收人 WhatsApp 推送</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #25D366;
+      border-bottom: 3px solid #25D366;
+      padding-bottom: 10px;
+    }
+    .test-section {
+      margin: 30px 0;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 5px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-family: monospace;
+    }
+    textarea {
+      min-height: 100px;
+    }
+    button {
+      background: #25D366;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px 5px;
+    }
+    button:hover {
+      background: #128C7E;
+    }
+    .result {
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    .error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+    .info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+    .warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15px 0;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    th {
+      background: #25D366;
+      color: white;
+    }
+    .status-ok {
+      color: #155724;
+      font-weight: bold;
+    }
+    .status-fail {
+      color: #721c24;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📱 多接收人 WhatsApp 推送测试</h1>
+    <p>测试同时向多个手机号发送 WhatsApp 消息</p>
+
+    <!-- 第一部分：配置Firebase接收人 -->
+    <div class="test-section">
+      <h2>📋 第一步：查看 Firebase 配置</h2>
+      <p>当前餐厅: <strong id="currentRest">Sanjou</strong></p>
+      <button onclick="checkFirebaseConfig()">检查 Firebase 配置</button>
+      <div id="firebaseResult"></div>
+    </div>
+
+    <!-- 第二部分：手动输入多个接收人 -->
+    <div class="test-section">
+      <h2>✉️ 第二步：测试发送到多个号码</h2>
+      <label><strong>接收人手机号 (每行一个):</strong></label>
+      <textarea id="recipients" placeholder="31612345678&#10;31687654321&#10;31698765432"></textarea>
+
+      <label><strong>测试消息:</strong></label>
+      <textarea id="message">📩 Nieuwe bestelling (*Tafel 5*, *#1234*)
+
+▶ 2x Spring Roll (€6.50)
+▶ 1x Peking Duck (€18.50)
+
+🧾 Totaal items: 2
+💰 *Totaal bedrag: €25.00*</textarea>
+
+      <button onclick="testMultiSend('local')">测试本地发送 (多接收人)</button>
+      <button onclick="testMultiSend('cloud')">测试云端发送 (多接收人)</button>
+      <div id="sendResult"></div>
+    </div>
+
+    <!-- 第三部分：测试sendWhatsAppWithFallback -->
+    <div class="test-section">
+      <h2>🔄 第三步：测试完整回退逻辑</h2>
+      <p>模拟真实订单流程（本地优先 → 云端回退）</p>
+      <button onclick="testWithFallback()">测试完整回退逻辑</button>
+      <div id="fallbackResult"></div>
+    </div>
+
+    <!-- 日志区域 -->
+    <div class="test-section">
+      <h2>📋 实时日志</h2>
+      <div id="logs"></div>
+    </div>
+  </div>
+
+  <!-- 加载脚本 -->
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.17.2/firebase-database-compat.js"></script>
+  <script src="whatsapp-module.js"></script>
+
+  <script>
+    // 初始化 Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyCRmQTQ2eYkavNh4C0pkggIaGbWz4iWE3Q",
+      authDomain: "cislink.firebaseapp.com",
+      databaseURL: "https://cislink-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "cislink",
+      storageBucket: "cislink.firebasestorage.app",
+      messagingSenderId: "295505146634",
+      appId: "1:295505146634:web:4cfa3c9e00344060f7c0f3",
+      measurementId: "G-CQ705CDDCV"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    const restName = 'Sanjou';
+    document.getElementById('currentRest').textContent = restName;
+
+    function log(message, type = 'info') {
+      const logsDiv = document.getElementById('logs');
+      const entry = document.createElement('div');
+      entry.className = 'result ' + type;
+      entry.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+      logsDiv.insertBefore(entry, logsDiv.firstChild);
+      console.log(message);
+    }
+
+    function showResult(elementId, message, type = 'info') {
+      const div = document.getElementById(elementId);
+      div.innerHTML = `<div class="result ${type}">${message}</div>`;
+    }
+
+    // 检查 Firebase 配置
+    async function checkFirebaseConfig() {
+      log('🔍 正在检查 Firebase 配置...');
+      showResult('firebaseResult', '⏳ 正在读取配置...', 'info');
+
+      try {
+        const configRef = database.ref(`/${restName}/config`);
+        const snapshot = await configRef.once('value');
+        const config = snapshot.val();
+
+        if (!config) {
+          showResult('firebaseResult', `❌ 未找到配置: /${restName}/config`, 'error');
+          log(`❌ Firebase 配置不存在`);
+          return;
+        }
+
+        const whatsappBerichtAan = config.whatsappBerichtAan;
+        const whatsappRecipients = config.whatsappRecipients;
+
+        let html = '<h3>✅ Firebase 配置读取成功</h3>';
+        html += '<table>';
+        html += '<tr><th>配置项</th><th>值</th><th>状态</th></tr>';
+
+        // whatsappBerichtAan
+        html += '<tr>';
+        html += '<td><strong>whatsappBerichtAan</strong></td>';
+        html += `<td>${JSON.stringify(whatsappBerichtAan)} (${typeof whatsappBerichtAan})</td>`;
+        html += `<td class="${whatsappBerichtAan === true ? 'status-ok' : 'status-fail'}">`;
+        html += whatsappBerichtAan === true ? '✅ 已启用' : '❌ 未启用';
+        html += '</td></tr>';
+
+        // whatsappRecipients
+        html += '<tr>';
+        html += '<td><strong>whatsappRecipients</strong></td>';
+        html += `<td>${JSON.stringify(whatsappRecipients)}</td>`;
+        html += `<td class="${Array.isArray(whatsappRecipients) && whatsappRecipients.length > 0 ? 'status-ok' : 'status-fail'}">`;
+        if (Array.isArray(whatsappRecipients) && whatsappRecipients.length > 0) {
+          html += `✅ ${whatsappRecipients.length} 个接收人`;
+        } else {
+          html += '❌ 未设置接收人';
+        }
+        html += '</td></tr>';
+
+        html += '</table>';
+
+        // 显示所有接收人
+        if (Array.isArray(whatsappRecipients) && whatsappRecipients.length > 0) {
+          html += '<h4>接收人列表:</h4><ul>';
+          whatsappRecipients.forEach((phone, index) => {
+            html += `<li>${index + 1}. ${phone}</li>`;
+          });
+          html += '</ul>';
+
+          // 自动填充到测试框
+          document.getElementById('recipients').value = whatsappRecipients.join('\n');
+        }
+
+        showResult('firebaseResult', html, 'success');
+        log(`✅ Firebase 配置检查完成: ${whatsappRecipients.length} 个接收人`);
+      } catch (error) {
+        showResult('firebaseResult', `❌ 读取失败: ${error.message}`, 'error');
+        log(`❌ Firebase 错误: ${error.message}`);
+      }
+    }
+
+    // 获取接收人列表
+    function getRecipients() {
+      const text = document.getElementById('recipients').value.trim();
+      return text.split('\n').map(p => p.trim()).filter(p => p);
+    }
+
+    // 测试多接收人发送
+    async function testMultiSend(mode) {
+      const recipients = getRecipients();
+      const message = document.getElementById('message').value.trim();
+
+      if (recipients.length === 0) {
+        showResult('sendResult', '❌ 请输入至少一个接收人手机号', 'error');
+        return;
+      }
+
+      if (!message) {
+        showResult('sendResult', '❌ 请输入测试消息', 'error');
+        return;
+      }
+
+      const modeText = mode === 'local' ? '本地' : '云端';
+      log(`📤 开始 ${modeText} 发送到 ${recipients.length} 个接收人...`);
+      showResult('sendResult', `⏳ 正在发送到 ${recipients.length} 个接收人...`, 'info');
+
+      try {
+        let result;
+        if (mode === 'local') {
+          result = await window.sendOrderViaLocalWWeb(recipients, message);
+        } else {
+          result = await window.sendWhatsAppMessage(recipients, message);
+        }
+
+        let html = `<h3>${result.success ? '✅' : '❌'} ${modeText}发送${result.success ? '成功' : '失败'}</h3>`;
+        html += '<table>';
+        html += '<tr><th>序号</th><th>接收人</th><th>状态</th><th>错误</th></tr>';
+
+        result.results.forEach((r, index) => {
+          html += '<tr>';
+          html += `<td>${index + 1}</td>`;
+          html += `<td>${r.to}</td>`;
+          html += `<td class="${r.success ? 'status-ok' : 'status-fail'}">${r.success ? '✅ 成功' : '❌ 失败'}</td>`;
+          html += `<td>${r.error || '-'}</td>`;
+          html += '</tr>';
+        });
+
+        html += '</table>';
+        html += `<p><strong>总计:</strong> ${result.results.filter(r => r.success).length} 成功 / ${result.results.length} 总数</p>`;
+        html += `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+
+        showResult('sendResult', html, result.success ? 'success' : 'error');
+        log(`${result.success ? '✅' : '❌'} ${modeText}发送完成: ${result.results.filter(r => r.success).length}/${result.results.length} 成功`);
+      } catch (error) {
+        showResult('sendResult', `❌ ${modeText}发送异常: ${error.message}`, 'error');
+        log(`❌ ${modeText}发送错误: ${error.message}`);
+      }
+    }
+
+    // 测试完整回退逻辑
+    async function testWithFallback() {
+      const recipients = getRecipients();
+      const message = document.getElementById('message').value.trim();
+
+      if (recipients.length === 0) {
+        showResult('fallbackResult', '❌ 请输入至少一个接收人手机号', 'error');
+        return;
+      }
+
+      log(`🔄 开始测试完整回退逻辑 (${recipients.length} 个接收人)...`);
+      showResult('fallbackResult', '⏳ 正在测试...', 'info');
+
+      let html = '<h3>📋 完整回退逻辑测试报告</h3>';
+
+      try {
+        // 1. 检查本地服务器状态
+        html += '<h4>1️⃣ 检查本地服务器状态</h4>';
+        let localOnline = false;
+        try {
+          const statusResp = await fetch('https://whatsapp.cislink.nl/status', {
+            signal: AbortSignal.timeout(3000)
+          });
+
+          html += `<p>HTTP 状态码: ${statusResp.status}</p>`;
+
+          // ✅ 检查状态码是否在 200-300 之间
+          if (statusResp.status < 200 || statusResp.status > 300) {
+            html += `<p class="status-fail">❌ HTTP 状态码不在 200-300 范围内</p>`;
+          } else {
+            const statusData = await statusResp.json();
+            localOnline = statusData.state === 'CONNECTED';
+            html += `<p class="${localOnline ? 'status-ok' : 'status-fail'}">`;
+            html += localOnline ? '✅ 本地服务器在线' : '⚠️ 本地服务器离线';
+            html += `</p>`;
+          }
+        } catch {
+          html += '<p class="status-fail">⚠️ 本地服务器不可达</p>';
+        }
+
+        // 2. 尝试本地发送
+        html += '<h4>2️⃣ 尝试本地发送</h4>';
+        let localResult = null;
+        if (localOnline) {
+          localResult = await window.sendOrderViaLocalWWeb(recipients, message);
+          html += `<p class="${localResult.success ? 'status-ok' : 'status-fail'}">`;
+          html += localResult.success ? '✅ 本地发送成功' : '❌ 本地发送失败';
+          html += `</p>`;
+          html += `<p>成功: ${localResult.results.filter(r => r.success).length}/${localResult.results.length}</p>`;
+        } else {
+          html += '<p class="status-fail">⚠️ 跳过本地发送（服务器离线）</p>';
+        }
+
+        // 3. 如果本地失败，尝试云端
+        html += '<h4>3️⃣ 云端回退</h4>';
+        if (!localResult || !localResult.success) {
+          html += '<p>⏳ 本地发送未成功，启动云端回退...</p>';
+          const cloudResult = await window.sendWhatsAppMessage(recipients, message);
+          html += `<p class="${cloudResult.success ? 'status-ok' : 'status-fail'}">`;
+          html += cloudResult.success ? '✅ 云端发送成功' : '❌ 云端发送失败';
+          html += `</p>`;
+          html += `<p>成功: ${cloudResult.results.filter(r => r.success).length}/${cloudResult.results.length}</p>`;
+
+          html += '<h4>详细结果:</h4>';
+          html += '<table>';
+          html += '<tr><th>接收人</th><th>状态</th><th>错误</th></tr>';
+          cloudResult.results.forEach(r => {
+            html += '<tr>';
+            html += `<td>${r.to}</td>`;
+            html += `<td class="${r.success ? 'status-ok' : 'status-fail'}">${r.success ? '✅' : '❌'}</td>`;
+            html += `<td>${r.error || '-'}</td>`;
+            html += '</tr>';
+          });
+          html += '</table>';
+        } else {
+          html += '<p class="status-ok">✅ 本地发送已成功，无需云端回退</p>';
+        }
+
+        showResult('fallbackResult', html, 'success');
+        log('✅ 完整回退逻辑测试完成');
+      } catch (error) {
+        html += `<p class="status-fail">❌ 测试过程出错: ${error.message}</p>`;
+        showResult('fallbackResult', html, 'error');
+        log(`❌ 回退逻辑测试错误: ${error.message}`);
+      }
+    }
+
+    // 页面加载时自动检查配置
+    window.addEventListener('load', () => {
+      log('🚀 测试工具已就绪');
+      checkFirebaseConfig();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!-- Server functions -->
+
+<script>
+  //==============================================================================================================================
+  //Auto sluiten en auto openen van alle tafels, ook eerst moet device id deleten zorgt voor 100% sync door andere apparaten!!!!
+async function runServerFunction(funcName) {
+    try {
+        // Fetch the `RestNameUrl` dynamically
+        const RestNameUrlElement = document.getElementById('restUrlName');
+        if (!RestNameUrlElement) {
+            throw new Error("The element with ID 'restUrlName' was not found.");
+        }
+        const RestNameUrl = RestNameUrlElement.innerText.trim();
+
+        if (!RestNameUrl) {
+            throw new Error("The restaurant name URL (RestNameUrl) is empty or undefined.");
+        }
+
+        // Determine the status to update based on the function name
+        const newStatus = funcName === 'autoSluitenAll' ? 'afgesloten' : 'open';
+
+        // Show the loading overlay
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        // Fetch all tables to build the update payload
+        const snapshot = await firebase.database().ref(`/${RestNameUrl}/tafel`).once('value');
+        const data = snapshot.val();
+
+        if (!data) {
+            throw new Error("No tables found in the database.");
+        }
+
+        // Step 1: Remove `deviceId` from all tables
+        const removeDeviceIdUpdates = {};
+        Object.keys(data).forEach((tableId) => {
+            removeDeviceIdUpdates[`/${RestNameUrl}/tafel/${tableId}/lastUpdatedBy`] = null;
+        });
+
+        await firebase.database().ref().update(removeDeviceIdUpdates);
+        console.log("Device IDs removed for all tables.");
+
+        // Step 2: Batch update statuses
+        const updates = {};
+        Object.keys(data).forEach((tableId) => {
+            updates[`/${RestNameUrl}/tafel/${tableId}/Status`] = newStatus;
+            updates[`/${RestNameUrl}/tafel/${tableId}/lastUpdatedBy`] = deviceId; // Reset deviceId
+        });
+
+        await firebase.database().ref().update(updates);
+        console.log("Table statuses updated successfully.");
+
+        // Update the UI optimistically
+        document.querySelectorAll('.switch input').forEach((checkbox) => {
+            checkbox.checked = newStatus === 'open';
+        });
+
+        // Show success message
+        const message = funcName === 'autoSluitenAll' ? "Alle tafels zijn gesloten." : "Alle tafels zijn geopend.";
+        const notificationType = funcName === 'autoSluitenAll' ? "error" : "success"; // Red for closed, green for open
+
+        // Show the notification instead of using alert
+        showNotification(message, notificationType);
+
+    } catch (error) {
+        // Handle errors
+        console.error("Error updating table statuses:", error);
+        alert(`Fout bij het bijwerken van de statussen: ${error.message}`);
+    } finally {
+        // Hide the loading overlay and reset UI
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+        document.getElementById('centerPanel2').style.display = 'none';
+        document.getElementById('passwordInputTafel').value = ''; // Reset the password field
+        document.getElementById('passwordPrompt').style.display = 'none'; // Hide the password prompt
+    }
+}
+
+</script>

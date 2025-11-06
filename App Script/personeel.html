@@ -1,0 +1,188 @@
+
+<!-- Personeel App Page  -->
+<!DOCTYPE html>
+<html target="_self">
+
+<head>
+  <title>Data Table</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <!-- Add Firebase SDK for the entire library, not modular imports -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+
+  <script>
+    const firebaseConfig = {
+    apiKey: "AIzaSyCRmQTQ2eYkavNh4C0pkggIaGbWz4iWE3Q",
+    authDomain: "cislink.firebaseapp.com",
+    databaseURL: "https://cislink-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "cislink",
+    storageBucket: "cislink.firebasestorage.app",
+    messagingSenderId: "295505146634",
+    appId: "1:295505146634:web:4cfa3c9e00344060f7c0f3",
+    measurementId: "G-CQ705CDDCV"
+  };
+  firebase.initializeApp(firebaseConfig);
+
+  </script>
+  <?!= include('style-css')?>
+</head>
+
+<body>
+  <div class="preven-scroll">
+
+    <div id="restUrlName" class="notranslate" style="display: none;">
+      <?= restUrlName; ?>
+    </div>
+    <div id="beheer" class="notranslate" style="display: none;">
+      <?= BeheerWachtwoord; ?>
+    </div>
+
+    <!-- This will be dynamically populated -->
+    <div id="notificationContainer"></div>
+
+    <div class="container">
+
+      <div id="loadingOverlay" style="display: none;">
+        <div class="spinner"></div>
+      </div>
+
+  <!-- centerPanel2: 批量开关台弹窗及遮罩 -->
+      <!-- centerPanel3: 批量开关全部台专用面板及遮罩 -->
+      <div id="centerPanel3Overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1001;"></div>
+      <div id="centerPanel3" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#FFF; padding:28px 28px 22px 28px; box-shadow:0 6px 24px rgba(0,0,0,0.18); border-radius:14px; z-index:1002; min-width:270px; max-width:90vw;">
+        <form onsubmit="return false;" style="width:100%; display:flex; flex-direction:column; align-items:center;">
+          <div style="margin-bottom:18px; width:100%; text-align:left;">
+            <label for="beheerWachtwoordInput" style="font-weight:600; font-size:1.08em; color:#222;">Beheer wachtwoord</label>
+            <input type="password" id="beheerWachtwoordInput" placeholder="Beheer wachtwoord" autocomplete="none" style="margin-top:10px; margin-bottom: 5px; padding: 10px 12px; text-align:center; width: 100%; max-width:220px; border:1.5px solid #e0e0e0; border-radius:7px; font-size:1.08em; background:#fafbfc; transition:border .2s; outline:none;">
+          </div>
+          <button id="confirmBeheerBtn" class="btn btn-primary" style="margin-top: 10px; width:100%; max-width:160px; font-weight:600; font-size:1.08em; letter-spacing:0.5px; border-radius:7px; box-shadow:0 2px 8px rgba(0,123,255,0.08);">Bevestig</button>
+        </form>
+      </div>
+      <div id="centerPanel2Overlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1001;"></div>
+      <div id="centerPanel2" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #FFF; padding: 20px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); border-radius: 8px; z-index: 1002;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 15px; z-index:999">
+          <div style="display: flex; justify-content: space-between; gap: 20px;">
+            <button id="sluitAllesBtn" class="btn btn-danger">Sluit alles</button>
+            <button id="openAllesBtn" class="btn btn-success">Open alles</button>
+          </div>
+          <div id="passwordPrompt" style="display: none;">
+            <form onsubmit="return false;">
+              <input type="password" id="passwordInputTafel" placeholder="Beheer wachtwoord" autocomplete="none" style="margin-bottom: 5px; padding: 8px;text-align:center; width: 70%; box-sizing: border-box;">
+              <button id="confirmPasswordBtn" class="btn btn-primary" style="margin-top: 10px;">Bevestig</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- centerPanel: 批量pincode弹窗及遮罩 -->
+      <div id="centerPanelOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1001;"></div>
+      <div id="centerPanel" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:#FFF; padding:20px; box-shadow:0 4px 8px rgba(0,0,0,0.1); z-index:1002;">
+        <form onsubmit="return false;" width="70%">
+          <div style="margin-bottom:20px;">
+            <label for="passwordInput">Beheer wachtwoord</label>
+            <input type="password" id="passwordInput" placeholder="Password" autocomplete="none">
+          </div>
+          <div style="margin-bottom:20px;">
+            <label for="pincodeInput">Nieuwe pincode</label>
+            <input type="number" id="pincodeInput" placeholder="Pincode" max="9999" class="pincodeInput">
+          </div>
+          <button id="confirmButtonPass" style="display:inline-block;" class="pincodeConfirm">Maak nieuwe code</button>
+        </form>
+      </div>
+
+      <!-- pincode message div holder -->
+      <div id="messageOverlay"
+        style="display:none; position: fixed;  z-index:998; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);">
+        <div id="message"
+          style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 20px;">
+
+        </div>
+      </div>
+
+
+      <div id="tableWrapper" class="table-responsive preven-scroll">
+        <table class="table" id="dataTable">
+          <thead>
+            <tr>
+              <th>Tafels</th>
+              <th>Pers.</th>
+              <th>Status</th>
+              <th>Pincode</th>
+              <th>Menu</th>
+            </tr>
+          </thead>
+          <tbody id="dataTableBody">
+            <!-- Data rows will be inserted here dynamically -->
+          </tbody>
+        </table>
+      </div>
+      <!-- 原有personPanel弹窗已注释掉，改为表格内直接编辑人数 -->
+      <!--
+      <div id="personPanel">
+        <button id="decreaseButton">-</button>
+        <input type="text" id="personCount" value="1" readonly style="width: 30px; text-align: center;">
+        <button id="increaseButton">+</button>
+        <button id="confirmButton">Bevestig</button>
+      </div>
+      -->
+
+      <div id="overlay"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+      </div>
+
+  <!-- (Removed duplicate/broken centerPanel and centerPanel2 block) -->
+
+
+      <div id="passwordMessage" style="color: red; margin-bottom: 20px;"></div>
+      <!-- QR Code Display Area -->
+      <div id="qrCodeContainer">
+        <!-- QR code will be loaded inside this container -->
+      </div>
+
+      <!-- pincode wijzigen en qrcode aanmaken -->
+      <div id="pincodePanel"
+        style="display:none; position:absolute; z-index:100; background-color: #fff; border: 1.5px solid #e0e0e0; padding: 18px 18px 14px 18px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.10); min-width: 220px; max-width: 95vw;">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%;">
+          <input type="number" id="newPincodeInput" placeholder="Nieuwe pincode" class="form-control pincodeInput" style="width: 100%; max-width: 180px; text-align: center; font-size: 1.08em;">
+          <div style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+            <button id="savePincodeButton" class="btn btn-primary btn-block" style="font-weight:600; font-size:1.05em; width:100%;">Wijzigen</button>
+            <button id="generateQrCodeButton" class="btn btn-info btn-block" style="font-weight:600; font-size:1.05em; width:100%;">Qr-code</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+    <!-- FAB Floating Action Buttons -->
+  <div id="fab-container" style="z-index:10; pointer-events:none; position:fixed; bottom:32px; right:32px;">
+  <input type="text" id="searchInput" class="fab-search" placeholder="Zoeken..." style="pointer-events:auto;">
+  <button class="fab-btn" id="fabPincodeBtn" style="pointer-events:auto;">
+      <span class="fab-label">Nieuwe pincodes</span>
+      <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M12 17a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm6-7V7a6 6 0 1 0-12 0v3a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zm-8-3a4 4 0 1 1 8 0v3H6V7zm10 12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v7z"/></svg>
+    </button>
+  <button class="fab-btn" id="fabSluitAllesBtn" style="pointer-events:auto;">
+      <span class="fab-label">Tafels aan/uit</span>
+      <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M3 6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6zm0 5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7zm2 1v6h14v-6H5z"/></svg>
+    </button>
+    </div>
+
+  <!-- 所有JS脚本移到body底部，确保DOM已渲染 -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+  <?!= include('ui-handlers-js')?>
+  <?!= include('init-js')?>
+  <?!= include('refetching-js')?>
+  <?!= include('password-management-js')?>
+  <?!= include('server-function-js')?>
+  <?!= include('notifications-js')?>
+  <?!= include('firebase-operations-js')?>
+  <?!= include('realtime-firebase')?>
+  <?!= include('qr-code-js')?>
+  <?!= include('auth-js')?>
+
+</body>
+
+</html>

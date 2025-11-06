@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="nl" target="_top">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+    <!-- 样式与字体 -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="fontawesome-local.css" id="fa-local">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css"
+        id="fa-cdn">
+    <script>
+        function isIOS() {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        }
+        if (isIOS()) {
+            document.getElementById('fa-cdn').disabled = true;
+            document.getElementById('fa-local').disabled = false;
+        } else {
+            document.getElementById('fa-local').disabled = true;
+            document.getElementById('fa-cdn').disabled = false;
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&family=Libre+Barcode+128&family=Roboto&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.1/themes/base/jquery-ui.css">
+
+
+    <!-- JS 第三方库 -->
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script type="text/javascript" id="google-translate-script"
+        src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <!-- Firebase 初始化 -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCRmQTQ2eYkavNh4C0pkggIaGbWz4iWE3Q",
+            authDomain: "cislink.firebaseapp.com",
+            databaseURL: "https://cislink-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "cislink",
+            storageBucket: "cislink.firebasestorage.app",
+            messagingSenderId: "295505146634",
+            appId: "1:295505146634:web:4cfa3c9e00344060f7c0f3",
+            measurementId: "G-CQ705CDDCV"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+
+
+    <!-- 本地样式表引用 -->
+    <link rel="stylesheet" href="style-css.css">
+    <link rel="stylesheet" href="notification-css.css">
+
+    <title>Loading...</title>
+</head>
+
+
+<body>
+
+    <!-- PIN invoer popup -->
+    <div id="pin-modal"
+        style="display:none;position:fixed;z-index:9999;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.5);align-items:center;justify-content:center;">
+        <div
+            style="background:#fff;padding:30px 20px;border-radius:8px;box-shadow:0 2px 10px #0003;max-width:90vw;width:320px;text-align:center;">
+            <h5>Voer uw pincode in</h5>
+            <input id="pin-input" type="password" maxlength="4" minlength="3" pattern="[0-9]*" inputmode="numeric"
+                style="font-size:2em;text-align:center;width:80%;margin:15px 0;" autofocus />
+            <div id="pin-error" style="color:#333;font-size:1em;min-height:1.5em;">Voer een 3- of 4-cijferige pincode in
+                om verder te gaan.</div>
+            <button id="pin-submit" style="margin-top:10px;" class="btn btn-primary">Bevestigen</button>
+        </div>
+    </div>
+
+    <header>
+        <div id="restaurant-name">
+            <img id="titleImage" src="" width="20%" height="auto" style="opacity: 0.9;" alt="Kokohili logo" />
+        </div>
+
+        <div id="restName" class="notranslate" style="display: none;"></div>
+        <div id="timer" class="notranslate" style="display: none;"></div>
+
+        <div id="limiet_eten" class="notranslate" style="display: none;"></div>
+        <div id="refreshURL" class="notranslate" style="display: none;"></div>
+        <div id="webhook" class="notranslate" style="display: none;"></div>
+        <div id="limiet_dessert" class="notranslate" style="display: none;"></div>
+        <div id="aantal_pers" class="notranslate" style="display: none;"></div>
+        <div id="lastInvoiceNum" class="notranslate" style="display: none;"></div>
+        <div id="maxTijd" class="notranslate" style="display: none;"></div>
+        <div id="eerste_ronde_tijd" class="notranslate" style="display: none;"></div>
+        <div id="pythonAuth" class="notranslate" style="display: none;"></div>
+        <div id="restNaam" class="notranslate" style="display: none;"></div>
+        <div id="tafelNummer" class="notranslate" style="display: none;"></div>
+        <div id="savedPin" class="notranslate" style="display: none;"></div>
+        <div id="webhookHealthUrl" class="notranslate" style="display: none;"></div>
+        <div id="tafelStatus" class="notranslate" style="display: none;"></div>
+    </header>
+
+
+    <main class="main-container flex-row">
+
+
+        <!-- //progress bar  -->
+        <div class="full-screen-overlay" id="overlay">
+            <div class="spinner"></div>
+        </div>
+        <div id="overlay-2" class="prevent-scroll"></div>
+
+        <section class="menu-payment grid">
+            <!-- Your menu and payment section content goes here -->
+            <div class="menu flex-row" id="menu">
+
+            </div>
+
+        </section>
+
+
+        <section class="order flex-column" id="mainBody">
+            <!-- Your order section content goes here -->
+            <article class="receipt flex-column" width="95vw">
+                <div class="company-info flex-column">
+                    <!-- Restaurant logo -->
+                    <img id="logo-img-receipt" src="" width="30%" height="auto">
+
+                    <!-- Tafelnummer en factuurnummer -->
+                    <p id="tafel-nummer">Tafel - </p>
+                    <p id="invoice-number"></p>
+                </div>
+
+                <div class="receipt-details">
+                    <table class="details-table">
+                        <thead>
+                            <tr>
+                                <td class="dotted-border" colspan="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="empty-border" colspan="5"></td>
+                            </tr>
+                            <tr>
+                                <th class="sku">SKU</th> <!-- New column for SKU -->
+                                <th class="description">Product</th>
+                                <th class="quantity">Aantal</th>
+                                <th class="price">Prijs</th>
+                                <!-- <th class="subtotal">Sub</th> -->
+                                <th class="delete">Bewerk</th>
+                            </tr>
+                            <tr>
+                                <td class="dotted-border" colspan="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="empty-border" colspan="5"></td>
+                            </tr>
+                        </thead>
+                        <tbody id="receipt-details">
+
+                        </tbody>
+                    </table>
+                </div>
+                <div class="receipt-summary" style="display: none;">
+                    <table class="summary-table">
+                        <tbody class="summary-table" id="total-summary">
+                            <tr>
+                                <td class="dotted-border" colspan="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="empty-border" colspan="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="notranslate">Totaal excl.：</td>
+                                <td id="subtotal-summary">€0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td class="notranslate">Btw：</td>
+                                <td id="tax-summary">€0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td class="notranslate">Totaal incl.：</td>
+                                <td class="to-pay" id="grandtotal-summary">€0.00</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                        <tbody class="summary-table" id="payment-summary">
+                            <tr>
+                                <td>Invoer bedrag:</td>
+                                <td id="amount-paid">€0.00</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td id="tip-change-title">Wisselgeld:</td>
+                                <td id="tip-change-value"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Betaalmethode:</td>
+                                <td id="payment-type"></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td class="dotted-border" colspan="5"></td>
+                            </tr>
+                            <tr>
+                                <td class="empty-border" colspan="5"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </article>
+
+
+
+            <div class="orderBtn" id="orderBtns">
+                <button id="order-history" class="order-action-btn">
+                    <i class="fas fa-archive"></i>
+                    <span class="notranslate">Historie</span>
+                </button>
+                <button id="show-bevestig-btn" class="order-action-btn">
+                    <i class="fas fa-archive"></i>
+                    <span class="notranslate">Laaste order</span>
+                </button>
+                <button id="order-verzend" class="order-action-btn">
+                    <i class="fas fa-paper-plane"></i>
+                    <span class="notranslate">Verzend</span>
+                </button>
+                <button id="order-clear" class="order-action-btn" style="background:#661414;color:#fff;">
+                    <i class="fas fa-trash-alt"></i>
+                    <span class="notranslate">Leegmaken</span>
+                </button>
+            </div>
+            <!-- 视图模式切换 -->
+<div id="order-view-toggle" class="order-view-toggle" style="display:flex;gap:8px;margin:10px 0;">
+  <button type="button" data-mode="my" class="btn btn-sm btn-secondary active">Mijn bestellingen</button>
+  <button type="button" data-mode="byDevice" class="btn btn-sm btn-outline-secondary">Per gast</button>
+  <button type="button" data-mode="summary" class="btn btn-sm btn-outline-secondary">Totaaloverzicht</button>
+</div>
+
+
+
+
+
+
+            <!-- Dropdown menu for filtering -->
+
+            </div>
+
+
+
+
+
+
+
+
+            <div class="orderDataWindow  flex-column" id="orderHistoryFrame">
+                <!-- This div represents the order data window with the ID "orderHistoryFrame" -->
+                <p class="order-data-show" id="lastOrderPage"></p>
+                <!-- This paragraph element with the ID "lastOrderPage" displays the order data -->
+                <div class="close-paypad">
+                    <!-- This div contains the close button for the order data window -->
+                    <button class="btn" id="close-btn"><i class="fas fa-times" id="confirm-close"></i>afsluiten</button>
+                    <!-- This button with the ID "confirm-close" serves as the close button for the order data window -->
+                </div>
+            </div>
+
+
+            <div class="payment grid" id="payment-overlay">
+                <!-- This div represents the payment overlay with the ID "payment-overlay" -->
+            </div>
+
+
+            <!-- this is the error message when ppl try to click on the order'verzend'button, while nothing was added -->
+            <!-- HTML for the message box -->
+            <div id="message-box"
+                style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: rgba(0, 0, 0, 0.8); color: white; padding: 10px; border-radius: 5px;">
+            </div>
+
+        </section>
+
+
+
+
+
+        <!-- Add this code inside the <body> section of your HTML file -->
+        <div id="message-container"></div>
+        <div id="message-container-notAdd"></div>
+
+
+        <!-- bevestiging, nadat heeft gedrukt op de knoop -->
+
+        <div class="receipt-footer flex-row" id="categorie">
+            <div class="submenu" id="foodSubMenu" style="display: none;"></div>
+            <div class="submenu" id="drinksSubMenu" style="display: none;"></div>
+
+            <!-- 一级按钮容器 -->
+            <a class="btn btn-outline-primary btn-lg active btn-menu btn-lvl1" href="#" role="button"
+                aria-pressed="true" data-target="foodSubMenu" id="btn-food-main">
+                Eten
+            </a>
+            <a class="btn btn-outline-primary btn-lg active btn-menu btn-lvl1" href="#" role="button"
+                aria-pressed="true" data-target="drinksSubMenu" id="btn-drink-main">
+                Dranken
+            </a>
+            <!-- 新增：Service 一级按钮（占位，后续通过 Firebase config 注入名称与 target） -->
+            <a class="btn btn-outline-primary btn-lg active btn-menu btn-lvl1" href="#" role="button"
+                aria-pressed="true" id="btn-service-main" data-target="serviceSubMenu" data-config-key="serviceCat">
+                Service
+            </a>
+            <div class="submenu" id="serviceSubMenu" style="display:none;"></div>
+        </div>
+
+        <!-- Level 1 Services Button -->
+        <!-- <a class="btn btn-outline-primary btn-lg active btn-menu btn-lvl1" id="service-btn" href="#<?=Cat18id?>"
+        role="button" aria-pressed="true">
+        <?=Knop_service?>
+      </a> -->
+        </div>
+
+
+
+
+
+
+
+
+        <div class="paypad flex-row" id="paypad">
+            <!-- This div represents the paypad section -->
+            <!-- This button with the ID "close-sale" serves as the confirmation button for the paypad section -->
+            <table class="button-table">
+                <tr>
+                    <td>
+                        <button class="paypad-btn span3-col btn btn-success" id="close-sale"
+                            data-id="close-sale">Bevestigen</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button class="paypad-btn span3-col btn btn-danger" id="verzend-close">Annuleren</button>
+                    </td>
+
+                </tr>
+            </table>
+
+        </div>
+        <div id="paypad-overlay"></div>
+
+        <span id="searchIcon">&#128269;</span> <!-- Placeholder for magnifying lens icon -->
+        <div id="searchContainer" class="hidden">
+            <input type="text" id="searchBar" placeholder="Zoeken...">
+            <span id="closeSearch">&#10006;</span> <!-- Placeholder for close icon -->
+            <div id="searchResults" class="search-results"></div>
+        </div>
+
+
+
+
+        <!-- Button for order list -->
+        <button id="toggle-order-list" class="custom-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor"
+                class="bi bi-cart-check-fill" viewBox="0 0 16 16">
+                <path
+                    d="M.5 1a.5.5 0 0 0 0 1h1.11l.401 1.607 1.498 7.985A.5.5 0 0 0 4 12h1a2 2 0 1 0 0 4 2 2 0 0 0 0-4h7a2 2 0 1 0 0 4 2 2 0 0 0 0-4h1a.5.5 0 0 0 .491-.408l1.5-8A.5.5 0 0 0 14.5 3H2.89l-.405-1.621A.5.5 0 0 0 2 1zM6 14a1 1 0 1 1-2 0 1 1 0 0 1 2 0m7 0a1 1 0 1 1-2 0 1 1 0 0 1 2 0m-1.646-7.646-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L8 8.293l2.646-2.647a.5.5 0 0 1 .708.708" />
+            </svg>
+        </button>
+
+        <!-- Button for toggling footer -->
+        <button id="toggle-footer-btn" class="custom-btn floating-button">
+            <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-square-half"
+                viewBox="0 0 16 16">
+                <path
+                    d="M8 15V1h6a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1zm6 1a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z" />
+            </svg>
+        </button>
+
+
+    </main>
+
+    <!-- ///////////////////////////////////////////////////////////////////////////////// -->
+
+    <div class="container" id="historyContainer">
+
+        <!-- ///////////////////the overlay to cover the screen when dorpdown option is selected////////////////////// -->
+        <div id="overlay-history">
+            <div class="loader"></div>
+        </div>
+
+        <!-- //////////////////////////////////////////////////////////////////////////////////////////////////////////////// -->
+        <button class="btn" id="close-btn1"><i class="fas fa-times" id="history-close"></i></button>
+
+        <div class="history-details" id="history-panel">
+            <table class="history-table">
+                <div id="h3-heading">
+                    <h5>Bestelgeschiedenis # - <span id="ronde"></span></h5>
+                </div>
+                <div id="time">
+                    <p>Besteltijd: <span id="timestamp"></span> </P>
+                </div>
+                <thead>
+                    <tr>
+                        <th class="description">Naam</th>
+                        <th class="quantity">Aantal</th>
+                        <th class="price">Prijs</th>
+                    </tr>
+                </thead>
+                <tbody id="history-details">
+                    <!-- Table rows will be dynamically populated here -->
+                </tbody>
+            </table>
+        </div>
+        <div class="dropdown-container" id="orderHistories">
+            <label for="filter-dropdown">Bezig met laden van bestelgeschiedenis...</label>
+
+            <select id="filter-dropdown">
+                <!-- Options will be dynamically populated -->
+            </select>
+        </div>
+    </div>
+
+    <!-- Translation Pop-Up for User Confirmation -->
+    <div id="translate-popup">
+        <div>
+            <p>Wilt u deze pagina naar uw taal vertalen?</p>
+            <button id="translate-yes">Ja</button>
+            <button id="translate-no">Nee</button>
+        </div>
+    </div>
+    <div id="google_translate_element" style="display: none;"></div>
+
+
+    <script src="firebase-loader.js"></script>
+    <script src="whatsapp-module.js"></script>
+    <script src="class-order-js.js"></script>
+    <script src="script-js.js"></script>
+    <script src="javascript.js"></script>
+    <script src="food-info-js.js"></script>
+    <script src="translation-js.js"></script>
+    <script src="verificatie-realtimeListener-js.js"></script>
+    <script src="sendingOrder.js"></script>
+
+    <script>
+        (function () {
+            // 检查URL参数
+            function getParam(name) {
+                const m = new RegExp('(?:[?&]|^)' + name + '=([^&]*)').exec(window.location.search);
+                return m ? decodeURIComponent(m[1]) : null;
+            }
+            if (!getParam('pincode')) {
+                // 显示PIN弹窗
+                document.getElementById('pin-modal').style.display = 'flex';
+                document.body.style.overflow = 'hidden';
+                const input = document.getElementById('pin-input');
+                const error = document.getElementById('pin-error');
+                input.value = '';
+                input.focus();
+                error.textContent = 'Voer een 3- of 4-cijferige pincode in om verder te gaan.';
+                document.getElementById('pin-submit').onclick = function () {
+                    const val = input.value.trim();
+                    if (!/^\d{3,4}$/.test(val)) {
+                        error.textContent = 'Voer een geldige 3- of 4-cijferige pincode in.';
+                        input.focus();
+                        return;
+                    }
+                    // 将pincode加到URL并刷新
+                    error.textContent = '';
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('pincode', val);
+                    window.location.href = url.toString();
+                };
+                input.onkeydown = function (e) {
+                    if (e.key === 'Enter') document.getElementById('pin-submit').click();
+                };
+            }
+        })();
+    </script>
+
+
+
+    <!-- FAB (moved to end of body for Safari/iOS compatibility) -->
+    <div id="fab-dial" class="fab-container" aria-label="Acties" aria-expanded="false">
+        <button id="fab-main" class="fab-main" aria-haspopup="true" aria-controls="fab-actions">
+            <span class="fab-icon" id="fab-icon-plus">＋</span>
+            <span class="fab-icon hidden" id="fab-icon-close">✕</span>
+        </button>
+        <ul id="fab-actions" class="fab-actions" role="menu">
+            <li role="menuitem">
+                <button class="fab-action" data-action="history" title="Historie">
+                    <i class="fas fa-archive"></i>
+                </button>
+                <span class="fab-label">Historie</span>
+            </li>
+            <li role="menuitem">
+                <button class="fab-action" data-action="last" title="Laatste order">
+                    <i class="fas fa-history"></i>
+                </button>
+                <span class="fab-label">Laatste</span>
+            </li>
+            <li role="menuitem">
+                <button class="fab-action fab-send" data-action="send" title="Verzend" style="position:relative;">
+                    <i class="fas fa-paper-plane"></i>
+                    <span id="fab-send-badge" class="fab-badge">0</span>
+                </button>
+                <span class="fab-label fab-label-strong">Verzend</span>
+            </li>
+            <li role="menuitem">
+                <button class="fab-action danger" data-action="clear" title="Leegmaken">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <span class="fab-label">Leegmaken</span>
+            </li>
+        </ul>
+    </div>
+    <script>
+        // FAB: keep above footer and safe area on iOS
+        (function () {
+            const dial = document.getElementById('fab-dial');
+            const main = document.getElementById('fab-main');
+            const plus = document.getElementById('fab-icon-plus');
+            const close = document.getElementById('fab-icon-close');
+            const footer = document.querySelector('.receipt-footer, #categorie'); // adjust if needed
+
+            function setFabBottom() {
+                const footerH = footer ? footer.getBoundingClientRect().height : 0;
+                // 16px gap + safe area + footer height
+                const px = 16 + footerH;
+                dial.style.setProperty('--fab-bottom', `calc(env(safe-area-inset-bottom) + ${px}px)`);
+            }
+
+            // Toggle actions
+            main?.addEventListener('click', () => {
+                const expanded = dial.getAttribute('aria-expanded') === 'true';
+                dial.setAttribute('aria-expanded', String(!expanded));
+                plus?.classList.toggle('hidden', !expanded === true);
+                close?.classList.toggle('hidden', expanded === true);
+            });
+
+            // Recompute on layout changes
+            ['load', 'resize', 'orientationchange'].forEach(ev => window.addEventListener(ev, setFabBottom));
+            if ('ResizeObserver' in window && footer) new ResizeObserver(setFabBottom).observe(footer);
+            setFabBottom();
+
+            // Optional: close when tapping outside actions
+            document.addEventListener('click', (e) => {
+                if (!dial.contains(e.target) && dial.getAttribute('aria-expanded') === 'true') {
+                    dial.setAttribute('aria-expanded', 'false');
+                    plus.classList.remove('hidden');
+                    close.classList.add('hidden');
+                }
+            }, true);
+        })();
+    </script>
+</body>
+
+</html>

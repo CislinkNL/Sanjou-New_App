@@ -1,0 +1,76 @@
+<!-- Authentication Firebase and Python -->
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    // 人员页：有 dataTable 就走这一支
+    if (document.getElementById('dataTable')) {
+        try {
+            await authenticate();
+        } catch (e) {
+            console.error('auth failed', e);
+        }
+        if (window.initializeDeviceId) initializeDeviceId();
+        if (window.loadData) await loadData();
+        if (window.setupRealtimeListeners) setupRealtimeListeners();
+        // pincode 输入联动
+        if (typeof setupPincodeInputHandler === 'function') {
+            setupPincodeInputHandler();
+        } else {
+            setTimeout(() => {
+                if (typeof setupPincodeInputHandler === 'function') {
+                    setupPincodeInputHandler();
+                }
+            }, 0);
+        }
+        return;
+    }
+
+    // 验证页：有 tafelNummer 就走这一支
+    if (document.getElementById('tafelNummer')) {
+        if (window.setupRealtimeListener) await setupRealtimeListener();
+        if (window.loadStatus) await loadStatus();
+        await authenticate();
+    }
+});
+
+async function authenticate() {
+    try {
+        const PythonAuthUrl = await fetchPythonAuth(); // Wait for the URL to be retrieved
+
+        // Fetch authentication token from the backend
+        const response = await fetch(PythonAuthUrl, { method: 'GET' });
+        if (!response.ok) {
+            throw new Error(`Failed to authenticate with the backend: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.token) {
+            // Authenticate with Firebase using the received custom token
+            await firebase.auth().signInWithCustomToken(data.token);
+            console.log("Authenticated with custom token");
+        } else {
+            throw new Error("No token received from backend");
+        }
+    } catch (error) {
+        console.error("Authentication error:", error.message);
+    }
+}
+
+function fetchPythonAuth() {
+    // Wrap google.script.run in a Promise
+    return new Promise((resolve, reject) => {
+        google.script.run
+            .withSuccessHandler((ngrokUrl) => {
+                if (ngrokUrl) {
+                    resolve(ngrokUrl); // Resolve the Promise with the URL
+                } else {
+                    reject(new Error("Failed to fetch ngrok URL"));
+                }
+            })
+            .withFailureHandler((error) => {
+                reject(new Error(`Error fetching ngrok URL: ${error}`));
+            })
+            .getNgrokUrl(); // Replace this with your actual Google Apps Script function
+    });
+}
+</script>
