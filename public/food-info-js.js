@@ -193,8 +193,25 @@ addToOrderBtn.addEventListener('click', () => {
     const sku = item.sku; // Unique identifier
     const messageBarDynamic = document.getElementById('messageBar-dynamic');
 
-    // Find the existing item in the order by SKU
-    const existingItem = orderInstance.order.find(orderItem => orderItem.sku === sku);
+    // Find the existing item in the order by lineKey/SKU and options
+    const safeKey = typeof orderInstance._buildLineKey === 'function'
+        ? orderInstance._buildLineKey(sku, selectedChoices)
+        : sku;
+
+    const existingItem = orderInstance.order.find(orderItem => {
+        const itemKey = orderItem.lineKey || (typeof orderInstance._buildLineKey === 'function'
+            ? orderInstance._buildLineKey(orderItem.sku, orderItem.options || {})
+            : orderItem.sku);
+        return itemKey === safeKey || (String(orderItem.sku) === String(sku) && JSON.stringify(orderItem.options || {}) === JSON.stringify(selectedChoices || {}));
+    });
+
+    // 当前已有数量
+    const currentQuantity = existingItem ? (Number(existingItem.quantity) || 0) : 0;
+
+    // ✅ 计算增量：用户选择的目标总数 - 当前已有数量（以更新最新数量的方式工作，避免多次累加导致 1->2->4）
+    const quantityDelta = chosenQuantity - currentQuantity;
+
+    console.log(`📊 数量计算: chosenQuantity=${chosenQuantity}, currentQuantity=${currentQuantity}, delta=${quantityDelta}`);
 
     // 数量限制校验
     if (chosenQuantity > 0) {
@@ -217,6 +234,13 @@ addToOrderBtn.addEventListener('click', () => {
 
         // ✅ Call deleteOrderLine correctly (only with SKU)
         orderInstance.deleteOrderLine(sku);
+        if (safeKey && safeKey !== sku) {
+            const restName = document.getElementById("restNaam")?.innerText.trim();
+            const tafelId = `Tafel-${document.getElementById("tafelNummer")?.innerText.trim()}`;
+            if (restName && tafelId) {
+                firebase.database().ref(`/${restName}/tafel/${tafelId}/orders/orderlist/${safeKey}`).remove();
+            }
+        }
 
         const receiptContainer = document.getElementById("receipt-details");
         const summaryContainer = document.getElementById("summary-table");
@@ -257,13 +281,23 @@ addToOrderBtn.addEventListener('click', () => {
         return; // Exit early, no need to add an order line
     }
 
-    // ✅ Otherwise, add/update the order line
-    orderInstance.addOrderLine(chosenQuantity, finalDescription, item.group, item.allergy, sku, totalPrice, selectedChoices);
+    // ✅ If delta is 0, no change needed (直接确认现有数量，不重复添加)
+    if (quantityDelta === 0) {
+        console.log(`ℹ️ 数量未发生改变 (仍为 ${chosenQuantity})，直接关闭弹窗`);
+        messageBarDynamic.remove();
+        const overlay = document.getElementById('overlay-under');
+        if (overlay) overlay.style.display = 'none';
+        return;
+    }
 
-    console.log("✅ Order added:", {
+    // ✅ Otherwise, add/update the order line with the DELTA
+    orderInstance.addOrderLine(quantityDelta, finalDescription, item.group, item.allergy, sku, totalPrice, selectedChoices);
+
+    console.log("✅ Order updated to target quantity:", {
         sku,
         description: finalDescription,
         quantity: chosenQuantity,
+        delta: quantityDelta,
         price: totalPrice,
         options: selectedChoices
     });
