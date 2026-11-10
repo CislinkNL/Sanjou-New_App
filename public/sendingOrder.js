@@ -57,7 +57,7 @@ async function sendDirect(timerText, tafelNr, orderLineCount, newInvoiceNumber, 
       sku: sanitizeSku(item?.[1]), // ✅ 使用清理后的SKU
       price: item?.[3] ?? 0,
       quantity: item?.[2] ?? 0,
-      description: item?.[5] ?? "No description",
+      description: (item?.[6] || item?.[5]) ?? "No description", // ✅ 优先使用原始荷兰语描述(index 6)，回退到index 5
     }));
     baseInfoRef.articleCount = items.length;
 

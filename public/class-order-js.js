@@ -58,6 +58,7 @@ class Order {
             const currItem = {
                 sku: menuItem.sku,
                 description: menuItem.description,
+                originalDescription: menuItem.description, // ✅ 锁定原始荷兰语名称
                 displayName: `${menuItem.sku} - ${menuItem.description}`,
                 price: priceDisplay,
                 taxRate: menuItem.taxRate,
@@ -244,6 +245,7 @@ class Order {
                     ? orderData
                     : Object.keys(orderData).map((key) => ({
                         description: orderData[key].description || "No description",
+                        originalDescription: orderData[key].originalDescription || orderData[key].description || "No description",
                         quantity: orderData[key].quantity || 0,
                         price: parseFloat(orderData[key].price) || 0,
                         group: orderData[key].group || "unknown",
@@ -407,6 +409,7 @@ class Order {
                     lineKey,
                     sku: (v && v.sku) || lineKey,
                     description: (v && v.description) || 'No description',
+                    originalDescription: (v && v.originalDescription) || (v && v.description) || 'No description',
                     quantity: Number(v && v.quantity) || 0,
                     price: Number(v && v.price) || 0,
                     group: (v && v.group) || 'unknown',
@@ -569,6 +572,16 @@ class Order {
 
             next.sku = menuItem.sku;
             next.description = description;
+
+            // ✅ 获取原始荷兰语描述（直接从菜单项获取，防浏览器翻译破坏）
+            let origDesc = (menuItem && (menuItem.originalDescription || menuItem.description)) || description;
+            if (normalizedOptions && Object.keys(normalizedOptions).length > 0) {
+                Object.values(normalizedOptions).forEach(choice => {
+                    if (choice) origDesc += ` + ${choice}`;
+                });
+            }
+            next.originalDescription = origDesc;
+
             next.price = unitPrice;
             next.group = group;
             next.allergy = allergy;
@@ -607,6 +620,7 @@ class Order {
                     lineKey: safeKey,
                     sku,
                     description,
+                    originalDescription: val.originalDescription || origDesc,
                     quantity: val.quantity,
                     price: val.price,
                     taxRate: val.taxRate,
@@ -805,6 +819,7 @@ class Order {
         const updatedOrderData = this._order.length === 0 ? null : this._order.reduce((acc, item) => {
             acc[item.sku] = {
                 description: item.description,
+                originalDescription: item.originalDescription || item.description,
                 quantity: item.quantity,
                 price: item.price,
                 taxRate: item.taxRate || 0,
@@ -876,13 +891,29 @@ class Order {
     exportOrder(date) {
         const exportData = [];
         this.order.forEach(orderLine => {
+            // 获取菜品原本的荷兰语名称
+            const menuItem = this.menu.find(m => String(m.sku) === String(orderLine.sku));
+            let origDesc = orderLine.originalDescription;
+            if (!origDesc && menuItem && menuItem.description) {
+                origDesc = menuItem.description;
+                if (orderLine.options && Object.keys(orderLine.options).length > 0) {
+                    Object.values(orderLine.options).forEach(choice => {
+                        if (choice) origDesc += ` + ${choice}`;
+                    });
+                }
+            }
+            if (!origDesc) {
+                origDesc = orderLine.description || "No description";
+            }
+
             const currentLine = [];
             currentLine[0] = date.toISOString();
             currentLine[1] = orderLine.sku;
             currentLine[2] = orderLine.quantity;
             currentLine[3] = orderLine.price;
             currentLine[4] = orderLine.taxRate;
-            currentLine[5] = orderLine.description;
+            currentLine[5] = orderLine.description; // 前端展示用描述（可能被翻译）
+            currentLine[6] = origDesc;              // ✅ 原始荷兰语描述（确保订单文件始终使用荷兰语）
             exportData.push(currentLine);
         });
         return exportData;
@@ -1084,6 +1115,7 @@ class Order {
                 lineKey,
                 sku: val.sku || lineKey,
                 description: val.description || 'No description',
+                originalDescription: val.originalDescription || val.description || 'No description',
                 quantity: val.quantity || 0,
                 price: parseFloat(val.price) || 0,
                 taxRate: val.taxRate || 0,

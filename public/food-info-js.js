@@ -119,8 +119,8 @@ if (item.hasOptions && Object.keys(item.options).length > 0) {
         <button id="closeMessageBar" class="close-message-bar">X</button>
         <img src="${item.image}" alt="${item.description}" class="item-image">
         
-        <!-- ✅ Updated to allow dynamic description -->
-        <div class="item-description" translate="yes">${item.description}</div>
+        <!-- ✅ Updated to allow dynamic description (notranslate ensures dish names stay original) -->
+        <div class="item-description notranslate" translate="no" data-original-description="${item.description}">${item.description}</div>
 
         <div id="options-container">${optionsHTML}</div>
         <div class="allergy-info" translate="yes">${item.allergy}</div>
@@ -171,7 +171,11 @@ if (item.hasOptions && Object.keys(item.options).length > 0) {
                 Object.entries(selectedChoices).forEach(([optionName, choice]) => {
                     newDescription += `+ ${choice}`;
                 });
-                document.querySelector(".item-description").textContent = newDescription;
+                const descEl = document.querySelector(".item-description");
+                if (descEl) {
+                    descEl.textContent = newDescription;
+                    descEl.setAttribute("data-original-description", newDescription);
+                }
             });
 
             select.dispatchEvent(new Event("change")); // Trigger change to set default
@@ -184,7 +188,8 @@ if (addToOrderBtn) {
 addToOrderBtn.addEventListener('click', () => {
 
     const chosenQuantity = parseInt(document.querySelector('.item-quantity').textContent, 10);
-    const finalDescription = document.querySelector('.item-description').textContent;
+    const descEl = document.querySelector('.item-description');
+    const finalDescription = descEl?.getAttribute("data-original-description") || descEl?.textContent || item.description;
     const sku = item.sku; // Unique identifier
     const messageBarDynamic = document.getElementById('messageBar-dynamic');
 

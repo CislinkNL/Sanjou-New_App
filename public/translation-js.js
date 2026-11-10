@@ -129,6 +129,10 @@ function replaceTextInDocument(dictionary, revert = false, targetElement = docum
         let node;
         while ((node = walker.nextNode())) {
             const parent = node.parentElement;
+            // ✅ 跳过订单与小票相关的元素，保持原始荷兰语描述
+            if (parent && parent.closest('.receipt-details, #receipt-details, .order-item-description, .item-description')) {
+                continue;
+            }
             if (parent && (parent.getAttribute("translate") === "yes" || !parent.hasAttribute("translate"))) {
                 const originalText = node.nodeValue;
                 const { translated, changed } = translateText(originalText);
